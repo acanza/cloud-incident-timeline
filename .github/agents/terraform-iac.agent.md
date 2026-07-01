@@ -176,6 +176,28 @@ When debugging or refactoring:
 3. Suggest changes incrementally to maintain stability
 4. Provide migration paths when restructuring code
 
+## Project-specific specifications
+
+Always read and follow the project-specific specifications located in:
+
+```text
+.github/specs/
+```
+
+Read the files in numeric order before proposing or modifying Terraform code:
+
+00-project-context.md
+01-architecture.md
+02-terraform-structure.md
+03-networking.md
+04-ecs-fargate.md
+05-security-iam.md
+06-data-and-events.md
+07-cost-control.md
+08-implementation-phases.md
+
+If there is a conflict between the global IaC instructions and the project-specific specifications, follow the stricter rule. If the conflict affects architecture, cost, security or resource lifecycle, ask for clarification before implementing.
+
 ## Directory Structure Conventions
 
 ```
