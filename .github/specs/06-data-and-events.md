@@ -113,6 +113,77 @@ IncidentStatusChanged
 }
 ```
 
+## EventBridge and SQS Defaults
+
+The project must create one custom EventBridge bus.
+
+Default bus name:
+
+```text
+cloud-incident-timeline-dev-event-bus
+```
+
+Name pattern:
+
+```text
+${project_name}-${environment}-event-bus
+```
+
+The `incident-service` must publish events using this source:
+
+```text
+cloud-incident-timeline.incident-service
+```
+
+Required event types:
+
+```text
+IncidentCreated
+IncidentStatusChanged
+```
+
+Create one EventBridge rule to route incident domain events to the audit queue.
+
+Default rule name:
+
+```text
+cloud-incident-timeline-dev-audit-events-rule
+```
+
+The rule must match:
+
+```json
+{
+  "source": ["cloud-incident-timeline.incident-service"],
+  "detail-type": ["IncidentCreated", "IncidentStatusChanged"]
+}
+```
+
+Create one SQS queue for audit events.
+
+Default queue name:
+
+```text
+cloud-incident-timeline-dev-audit-queue
+```
+
+Create one SQS dead-letter queue for audit processing failures.
+
+Default DLQ name:
+
+```text
+cloud-incident-timeline-dev-audit-dlq
+```
+
+Recommended redrive policy:
+
+```hcl
+max_receive_count = 3
+```
+
+Do not configure a separate EventBridge target DLQ in v0.1.
+
+
 ## EventBridge to SQS
 
 Create an EventBridge rule that forwards incident events to the audit SQS queue.
