@@ -317,25 +317,70 @@ This composition approach enables:
 - Independent module testing
 - Clear separation of concerns
 
-## Required default variables
+## Required Terraform Defaults
 
-The dev environment should define at least:
+The dev environment must define these defaults:
 
 ```hcl
 project_name = "cloud-incident-timeline"
 environment  = "dev"
 aws_region   = "eu-west-3"
 
-vpc_cidr = "10.0.0.0/16"
+vpc_cidr = "10.20.0.0/16"
 
 public_subnet_cidrs = [
-  "10.0.1.0/24",
-  "10.0.2.0/24"
+  "10.20.1.0/24",
+  "10.20.2.0/24"
 ]
 
-ecs_cpu       = 256
-ecs_memory    = 512
-desired_count = 1
+service_cpu = {
+  incident-service = 256
+  timeline-service = 256
+  audit-worker     = 256
+}
+
+service_memory = {
+  incident-service = 512
+  timeline-service = 512
+  audit-worker     = 512
+}
+
+service_desired_count = {
+  incident-service = 1
+  timeline-service = 1
+  audit-worker     = 1
+}
+
+container_port = 3000
+
+image_tag = "dev"
+
+log_retention_in_days = 3
+
+enable_remote_state = false
+enable_nat_gateway  = false
+enable_https        = false
+enable_cognito      = false
+enable_autoscaling  = false
+```
+
+The first version must use local Terraform state.
+
+Terraform version constraint:
+
+```hcl
+required_version = ">= 1.6.0, < 2.0.0"
+```
+
+AWS provider constraint:
+
+```hcl
+required_providers {
+  aws = {
+    source  = "hashicorp/aws"
+    version = "~> 5.0"
+  }
+}
 ```
 
 ## Outputs
