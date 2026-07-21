@@ -47,20 +47,31 @@ module "alb" {
 }
 
 # ============================================================================
+# PHASE 3: Data Layer - DynamoDB Tables
+# ============================================================================
+
+module "dynamodb" {
+  source = "../../modules/dynamodb"
+
+  project_name = var.project_name
+  environment  = var.environment
+}
+
+# ============================================================================
 # IAM Roles (Execution + Service-Specific Task Roles)
 # ============================================================================
 
 module "iam" {
   source = "../../modules/iam"
 
-  project_name       = var.project_name
-  environment        = var.environment
+  project_name        = var.project_name
+  environment         = var.environment
   ecr_repository_arns = module.ecr.repository_arns
 
-  # DynamoDB tables (placeholders for Phase 3)
-  incidents_table_arn = ""
-  timeline_table_arn  = ""
-  audit_logs_table_arn = ""
+  # DynamoDB tables (Phase 3)
+  incidents_table_arn     = module.dynamodb.incidents_table_arn
+  timeline_table_arn      = module.dynamodb.incident_timeline_table_arn
+  audit_logs_table_arn    = module.dynamodb.audit_logs_table_arn
 
   # EventBridge + SQS (placeholders for Phase 4)
   event_bus_arn   = ""
