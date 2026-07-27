@@ -3,17 +3,6 @@
 # Three tables for Phase 3: incidents, incident_timeline, audit_logs
 # ============================================================================
 
-terraform {
-  required_version = ">= 1.6.0, < 2.0.0"
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
 # ============================================================================
 # Incidents Table
 # Stores incident records created by incident-service
@@ -28,12 +17,6 @@ resource "aws_dynamodb_table" "incidents" {
     name = "incident_id"
     type = "S"
   }
-
-  point_in_time_recovery_specification {
-    enabled = false
-  }
-
-  deletion_protection_enabled = false
 
   tags = {
     Name        = "${var.project_name}-${var.environment}-incidents"
@@ -64,12 +47,6 @@ resource "aws_dynamodb_table" "incident_timeline" {
     type = "N"
   }
 
-  point_in_time_recovery_specification {
-    enabled = false
-  }
-
-  deletion_protection_enabled = false
-
   tags = {
     Name        = "${var.project_name}-${var.environment}-incident-timeline"
     Environment = var.environment
@@ -92,12 +69,6 @@ resource "aws_dynamodb_table" "audit_logs" {
     name = "audit_id"
     type = "S"
   }
-
-  point_in_time_recovery_specification {
-    enabled = false
-  }
-
-  deletion_protection_enabled = false
 
   tags = {
     Name        = "${var.project_name}-${var.environment}-audit-logs"

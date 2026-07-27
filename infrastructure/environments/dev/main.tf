@@ -41,9 +41,9 @@ module "alb" {
   subnet_ids        = module.networking.public_subnet_ids
   security_group_id = module.networking.alb_security_group_id
 
-  enable_http2              = true
+  enable_http2               = true
   enable_deletion_protection = false
-  health_check_path         = "/health"
+  health_check_path          = "/health"
 }
 
 # ============================================================================
@@ -69,9 +69,9 @@ module "iam" {
   ecr_repository_arns = module.ecr.repository_arns
 
   # DynamoDB tables (Phase 3)
-  incidents_table_arn     = module.dynamodb.incidents_table_arn
-  timeline_table_arn      = module.dynamodb.incident_timeline_table_arn
-  audit_logs_table_arn    = module.dynamodb.audit_logs_table_arn
+  incidents_table_arn  = module.dynamodb.incidents_table_arn
+  timeline_table_arn   = module.dynamodb.incident_timeline_table_arn
+  audit_logs_table_arn = module.dynamodb.audit_logs_table_arn
 
   # EventBridge + SQS (placeholders for Phase 4)
   event_bus_arn   = ""
@@ -102,9 +102,9 @@ module "incident_service" {
   }
 
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
-  task_role_arn          = module.iam.incident_service_task_role_arn
+  task_role_arn           = module.iam.incident_service_task_role_arn
 
-  log_group_name    = "/ecs/incident-service"
+  log_group_name     = "/ecs/incident-service"
   log_retention_days = var.log_retention_days
 
   security_group_ids = [module.networking.ecs_security_group_id]
@@ -113,6 +113,7 @@ module "incident_service" {
   # Attach to ALB target group
   target_group_arn = module.alb.incident_target_group_arn
   assign_public_ip = true
+  aws_region       = var.aws_region
 
   project_name = var.project_name
   environment  = var.environment
@@ -131,14 +132,14 @@ module "timeline_service" {
   desired_count   = var.service_desired_count["timeline-service"]
 
   environment_variables = {
-    AWS_REGION        = var.aws_region
+    AWS_REGION          = var.aws_region
     TIMELINE_TABLE_NAME = "cloud-incident-timeline-${var.environment}-incident_timeline"
   }
 
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
-  task_role_arn          = module.iam.timeline_service_task_role_arn
+  task_role_arn           = module.iam.timeline_service_task_role_arn
 
-  log_group_name    = "/ecs/timeline-service"
+  log_group_name     = "/ecs/timeline-service"
   log_retention_days = var.log_retention_days
 
   security_group_ids = [module.networking.ecs_security_group_id]
@@ -147,6 +148,7 @@ module "timeline_service" {
   # Attach to ALB target group
   target_group_arn = module.alb.timeline_target_group_arn
   assign_public_ip = true
+  aws_region       = var.aws_region
 
   project_name = var.project_name
   environment  = var.environment

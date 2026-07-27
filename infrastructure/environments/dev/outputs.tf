@@ -80,9 +80,9 @@ output "ecs_cluster_arn" {
 output "access_info" {
   description = "How to access the services"
   value = {
-    alb_dns                 = module.alb.alb_dns_name
-    incident_service_url    = "http://${module.alb.alb_dns_name}/incidents"
-    timeline_service_url    = "http://${module.alb.alb_dns_name}/incidents/{incidentId}/timeline"
-    incident_health_check   = "http://${module.alb.alb_dns_name}/health"
+    alb_dns               = module.alb.alb_dns_name
+    incident_service_url  = "http://${module.alb.alb_dns_name}/incidents"
+    timeline_service_url  = "http://${module.alb.alb_dns_name}/incidents/{incidentId}/timeline"
+    incident_health_check = "http://${module.alb.alb_dns_name}/health"
   }
 }

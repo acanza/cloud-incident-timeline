@@ -60,7 +60,7 @@ resource "aws_ecs_task_definition" "service" {
         logDriver = "awslogs"
         options = {
           "awslogs-group"         = aws_cloudwatch_log_group.service.name
-          "awslogs-region"        = data.aws_caller_identity.current.region
+          "awslogs-region"        = var.aws_region
           "awslogs-stream-prefix" = "ecs"
         }
       }
@@ -110,11 +110,9 @@ resource "aws_ecs_service" "service" {
     }
   }
 
-  # Rolling deployment strategy
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 100
-  }
+  # Rolling deployment strategy settings
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 100
 
   depends_on = [aws_cloudwatch_log_group.service]
 

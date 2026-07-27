@@ -123,6 +123,15 @@ variable "assign_public_ip" {
   default     = true
 }
 
+variable "aws_region" {
+  description = "AWS region for CloudWatch Logs configuration"
+  type        = string
+  validation {
+    condition     = can(regex("^[a-z]{2}-[a-z]+-\\d{1}$", var.aws_region))
+    error_message = "AWS region must be a valid region format (e.g., eu-west-3)."
+  }
+}
+
 variable "project_name" {
   description = "Project name used for resource naming and tagging"
   type        = string

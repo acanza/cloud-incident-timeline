@@ -52,5 +52,5 @@ output "ecs_security_group_id" {
 
 output "availability_zones" {
   description = "List of availability zones used"
-  value       = data.aws_availability_zones.available.names[0:2]
+  value       = slice(data.aws_availability_zones.available.names, 0, 2)
 }
