@@ -29,13 +29,14 @@ resource "aws_dynamodb_table" "incidents" {
 # ============================================================================
 # Incident Timeline Table
 # Stores timeline events for each incident (accessed by timeline-service)
+# PK: incident_id, SK: created_at (with event_id as regular attribute)
 # ============================================================================
 
 resource "aws_dynamodb_table" "incident_timeline" {
   name           = "${var.project_name}-${var.environment}-incident-timeline"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "incident_id"
-  range_key      = "timestamp"
+  range_key      = "created_at"
   
   attribute {
     name = "incident_id"
@@ -43,8 +44,8 @@ resource "aws_dynamodb_table" "incident_timeline" {
   }
 
   attribute {
-    name = "timestamp"
-    type = "N"
+    name = "created_at"
+    type = "S"
   }
 
   tags = {
@@ -58,15 +59,22 @@ resource "aws_dynamodb_table" "incident_timeline" {
 # ============================================================================
 # Audit Logs Table
 # Stores audit events processed by audit-worker from SQS
+# PK: entity_id (what was audited), SK: created_at (with audit_id as regular attribute)
 # ============================================================================
 
 resource "aws_dynamodb_table" "audit_logs" {
   name           = "${var.project_name}-${var.environment}-audit-logs"
   billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "audit_id"
+  hash_key       = "entity_id"
+  range_key      = "created_at"
   
   attribute {
-    name = "audit_id"
+    name = "entity_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "created_at"
     type = "S"
   }
 
