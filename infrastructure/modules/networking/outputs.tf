@@ -23,8 +23,8 @@ output "public_subnets" {
   value = {
     for subnet in aws_subnet.public :
     subnet.id => {
-      cidr_block            = subnet.cidr_block
-      availability_zone     = subnet.availability_zone
+      cidr_block              = subnet.cidr_block
+      availability_zone       = subnet.availability_zone
       map_public_ip_on_launch = subnet.map_public_ip_on_launch
     }
   }

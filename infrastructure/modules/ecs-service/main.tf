@@ -1,6 +1,6 @@
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
-  
+
   common_tags = merge(
     var.tags,
     {
@@ -47,7 +47,7 @@ resource "aws_ecs_task_definition" "service" {
           protocol      = "tcp"
         }
       ]
-      
+
       environment = [
         for key, value in var.environment_variables :
         {
@@ -124,7 +124,7 @@ resource "aws_ecs_service" "service" {
   )
 
   lifecycle {
-    ignore_changes = [desired_count]  # Allow external autoscaling to modify this
+    ignore_changes = [desired_count] # Allow external autoscaling to modify this
   }
 }
 

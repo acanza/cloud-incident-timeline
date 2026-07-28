@@ -9,10 +9,10 @@
 # ============================================================================
 
 resource "aws_dynamodb_table" "incidents" {
-  name           = "${var.project_name}-${var.environment}-incidents"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "incident_id"
-  
+  name         = "${var.project_name}-${var.environment}-incidents"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "incident_id"
+
   attribute {
     name = "incident_id"
     type = "S"
@@ -33,11 +33,11 @@ resource "aws_dynamodb_table" "incidents" {
 # ============================================================================
 
 resource "aws_dynamodb_table" "incident_timeline" {
-  name           = "${var.project_name}-${var.environment}-incident-timeline"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "incident_id"
-  range_key      = "created_at"
-  
+  name         = "${var.project_name}-${var.environment}-incident-timeline"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "incident_id"
+  range_key    = "created_at"
+
   attribute {
     name = "incident_id"
     type = "S"
@@ -63,11 +63,11 @@ resource "aws_dynamodb_table" "incident_timeline" {
 # ============================================================================
 
 resource "aws_dynamodb_table" "audit_logs" {
-  name           = "${var.project_name}-${var.environment}-audit-logs"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "entity_id"
-  range_key      = "created_at"
-  
+  name         = "${var.project_name}-${var.environment}-audit-logs"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "entity_id"
+  range_key    = "created_at"
+
   attribute {
     name = "entity_id"
     type = "S"

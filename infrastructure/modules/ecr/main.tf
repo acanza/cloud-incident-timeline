@@ -1,6 +1,6 @@
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
-  
+
   common_tags = merge(
     var.tags,
     {
@@ -15,9 +15,9 @@ locals {
 resource "aws_ecr_repository" "service" {
   for_each = toset(var.service_names)
 
-  name                    = "${local.name_prefix}-${each.value}"
-  image_tag_mutability    = "MUTABLE"
-  force_delete            = var.force_delete
+  name                 = "${local.name_prefix}-${each.value}"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = var.force_delete
 
   image_scanning_configuration {
     scan_on_push = false
