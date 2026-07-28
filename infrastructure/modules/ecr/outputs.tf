@@ -19,11 +19,11 @@ output "repositories" {
   value = {
     for service, repo in aws_ecr_repository.service :
     service => {
-      name             = repo.repository_name
-      url              = repo.repository_url
-      arn              = repo.arn
-      registry_id      = repo.registry_id
-      repository_uri   = repo.repository_url
+      name           = repo.repository_name
+      url            = repo.repository_url
+      arn            = repo.arn
+      registry_id    = repo.registry_id
+      repository_uri = repo.repository_url
     }
   }
 }

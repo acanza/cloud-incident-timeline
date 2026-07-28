@@ -9,12 +9,12 @@ resource "aws_cloudwatch_event_rule" "audit_events" {
   name           = "${var.project_name}-${var.environment}-audit-events-rule"
   description    = "Route incident events to audit queue"
   event_bus_name = aws_cloudwatch_event_bus.main.name
-  
+
   event_pattern = jsonencode({
     source      = ["cloud-incident-timeline.incident-service"]
     detail-type = ["IncidentCreated", "IncidentStatusChanged"]
   })
-  
+
   tags = var.tags
 }
 
@@ -24,7 +24,7 @@ resource "aws_cloudwatch_event_target" "audit_queue" {
   event_bus_name = aws_cloudwatch_event_bus.main.name
   target_id      = "AuditQueue"
   arn            = var.audit_queue_arn
-  
+
   # Allow EventBridge to send messages to the SQS queue
   role_arn = aws_iam_role.eventbridge_sqs_role.arn
 }

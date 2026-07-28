@@ -1,7 +1,7 @@
 # Naming convention helper
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
-  
+
   common_tags = merge(
     var.tags,
     {
@@ -120,7 +120,7 @@ resource "aws_vpc_security_group_ingress_rule" "alb_http" {
 # ALB SG outbound rule - to ECS services on application ports
 # Note: This will be updated once we know the exact ECS ports
 resource "aws_vpc_security_group_egress_rule" "alb_to_ecs" {
-  security_group_id       = aws_security_group.alb.id
+  security_group_id            = aws_security_group.alb.id
   referenced_security_group_id = aws_security_group.ecs.id
 
   description = "Allow outbound to ECS services"
@@ -152,10 +152,10 @@ resource "aws_security_group" "ecs" {
 resource "aws_vpc_security_group_ingress_rule" "ecs_from_alb" {
   security_group_id = aws_security_group.ecs.id
 
-  description              = "Allow inbound from ALB"
-  from_port                = 0
-  to_port                  = 65535
-  ip_protocol              = "tcp"
+  description                  = "Allow inbound from ALB"
+  from_port                    = 0
+  to_port                      = 65535
+  ip_protocol                  = "tcp"
   referenced_security_group_id = aws_security_group.alb.id
 
   tags = {

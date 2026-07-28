@@ -73,9 +73,9 @@ module "iam" {
   timeline_table_arn   = module.dynamodb.incident_timeline_table_arn
   audit_logs_table_arn = module.dynamodb.audit_logs_table_arn
 
-  # EventBridge + SQS (placeholders for Phase 4)
-  event_bus_arn   = ""
-  audit_queue_arn = ""
+  # EventBridge + SQS (Phase 4, updated after modules created)
+  event_bus_arn   = module.eventbridge.event_bus_arn
+  audit_queue_arn = module.sqs.audit_queue_arn
 }
 
 # ============================================================================
@@ -166,4 +166,56 @@ module "timeline_service" {
 # EventBridge, SQS, audit-worker service
 # ============================================================================
 
-# Placeholder for Phase 4
+# SQS audit queue and dead-letter queue
+module "sqs" {
+  source = "../../modules/sqs"
+
+  project_name      = var.project_name
+  environment       = var.environment
+  max_receive_count = 3
+}
+
+# EventBridge custom event bus and routing rule
+module "eventbridge" {
+  source = "../../modules/eventbridge"
+
+  project_name    = var.project_name
+  environment     = var.environment
+  audit_queue_arn = module.sqs.audit_queue_arn
+}
+
+# audit-worker ECS service
+module "audit_worker" {
+  source = "../../modules/ecs-service"
+
+  service_name    = "audit-worker"
+  cluster_name    = module.ecs_cluster.cluster_name
+  container_image = "${module.ecr.repository_urls["audit-worker"]}:dev"
+  container_port  = var.container_port
+  cpu             = var.service_cpu["audit-worker"]
+  memory          = var.service_memory["audit-worker"]
+  desired_count   = var.service_desired_count["audit-worker"]
+
+  environment_variables = {
+    AWS_REGION       = var.aws_region
+    AUDIT_QUEUE_URL  = module.sqs.audit_queue_url
+    AUDIT_TABLE_NAME = module.dynamodb.audit_logs_table_name
+    EVENT_BUS_NAME   = module.eventbridge.event_bus_name
+  }
+
+  task_execution_role_arn = module.iam.ecs_task_execution_role_arn
+  task_role_arn           = module.iam.audit_worker_task_role_arn
+
+  log_group_name     = "/ecs/audit-worker"
+  log_retention_days = var.log_retention_days
+
+  security_group_ids = [module.networking.ecs_security_group_id]
+  subnet_ids         = module.networking.public_subnet_ids
+
+  # audit-worker does NOT attach to ALB (target_group_arn uses default null)
+  assign_public_ip = true
+  aws_region       = var.aws_region
+
+  project_name = var.project_name
+  environment  = var.environment
+}

@@ -1,6 +1,6 @@
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
-  
+
   common_tags = merge(
     var.tags,
     {
@@ -20,7 +20,7 @@ resource "aws_lb" "main" {
   subnets            = var.subnet_ids
 
   enable_deletion_protection = var.enable_deletion_protection
-  enable_http2              = var.enable_http2
+  enable_http2               = var.enable_http2
 
   tags = merge(
     local.common_tags,
