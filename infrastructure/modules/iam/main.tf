@@ -28,7 +28,7 @@ data "aws_iam_policy_document" "ecs_task_assume" {
 # ============================================================================
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name_prefix        = "${local.name_prefix}-ecs-task-exec-"
+  name_prefix        = "${var.project_name}-${var.environment}-ecs-"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
   tags = merge(
     local.common_tags,
@@ -50,7 +50,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
 # ============================================================================
 
 resource "aws_iam_role" "incident_service_task_role" {
-  name_prefix        = "${local.name_prefix}-incident-service-task-"
+  name_prefix        = "${var.project_name}-${var.environment}-inc-"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
 
   tags = merge(
@@ -88,7 +88,7 @@ resource "aws_iam_role_policy" "incident_service_task_policy" {
 # ============================================================================
 
 resource "aws_iam_role" "timeline_service_task_role" {
-  name_prefix        = "${local.name_prefix}-timeline-service-task-"
+  name_prefix        = "${var.project_name}-${var.environment}-tl-"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
 
   tags = merge(
@@ -120,7 +120,7 @@ resource "aws_iam_role_policy" "timeline_service_task_policy" {
 # ============================================================================
 
 resource "aws_iam_role" "audit_worker_task_role" {
-  name_prefix        = "${local.name_prefix}-audit-worker-task-"
+  name_prefix        = "${var.project_name}-${var.environment}-aw-"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
 
   tags = merge(

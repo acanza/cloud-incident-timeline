@@ -56,7 +56,7 @@ resource "aws_lb_listener" "http" {
 
 # Target Group for incident-service
 resource "aws_lb_target_group" "incident_service" {
-  name        = "${local.name_prefix}-incident-tg"
+  name_prefix = "inc-"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -84,7 +84,7 @@ resource "aws_lb_target_group" "incident_service" {
 
 # Target Group for timeline-service
 resource "aws_lb_target_group" "timeline_service" {
-  name        = "${local.name_prefix}-timeline-tg"
+  name_prefix = "tl-"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
