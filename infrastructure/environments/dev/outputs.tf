@@ -86,3 +86,81 @@ output "access_info" {
     incident_health_check = "http://${module.alb.alb_dns_name}/health"
   }
 }
+
+# ============================================================================
+# Phase 3: DynamoDB Tables Outputs
+# ============================================================================
+
+output "dynamodb_table_names" {
+  description = "DynamoDB table names by service"
+  value       = module.dynamodb.table_names
+}
+
+output "dynamodb_table_arns" {
+  description = "DynamoDB table ARNs by service"
+  value       = module.dynamodb.table_arns
+}
+
+output "incidents_table_name" {
+  description = "Name of the incidents table"
+  value       = module.dynamodb.incidents_table_name
+}
+
+output "incident_timeline_table_name" {
+  description = "Name of the incident_timeline table"
+  value       = module.dynamodb.incident_timeline_table_name
+}
+
+output "audit_logs_table_name" {
+  description = "Name of the audit_logs table"
+  value       = module.dynamodb.audit_logs_table_name
+}
+
+# ============================================================================
+# Phase 4: Async Architecture Outputs
+# ============================================================================
+
+output "audit_worker_service_arn" {
+  description = "ARN of the audit-worker ECS service"
+  value       = module.audit_worker.service_arn
+}
+
+output "audit_worker_service_name" {
+  description = "Name of the audit-worker ECS service"
+  value       = module.audit_worker.service_name
+}
+
+output "eventbridge_event_bus_name" {
+  description = "Name of the custom EventBridge event bus"
+  value       = module.eventbridge.event_bus_name
+}
+
+output "eventbridge_event_bus_arn" {
+  description = "ARN of the custom EventBridge event bus"
+  value       = module.eventbridge.event_bus_arn
+}
+
+output "eventbridge_audit_rule_name" {
+  description = "Name of the EventBridge rule for audit events"
+  value       = module.eventbridge.audit_rule_name
+}
+
+output "audit_queue_url" {
+  description = "URL of the audit SQS queue"
+  value       = module.sqs.audit_queue_url
+}
+
+output "audit_queue_arn" {
+  description = "ARN of the audit SQS queue"
+  value       = module.sqs.audit_queue_arn
+}
+
+output "audit_dlq_url" {
+  description = "URL of the audit dead-letter queue"
+  value       = module.sqs.audit_dlq_url
+}
+
+output "audit_dlq_arn" {
+  description = "ARN of the audit dead-letter queue"
+  value       = module.sqs.audit_dlq_arn
+}
