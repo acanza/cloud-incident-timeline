@@ -162,49 +162,54 @@ EventBridge rules should route events to the appropriate SQS queues.
 
 ## 3.2 Queues
 
-**Current implementation (Terraform)**: Only audit queue is provisioned.
+Each consumer has its own dedicated queue to avoid competing for messages.
 
-Audit queue (from Terraform):
+Timeline queue (for timeline-service):
+
+```text
+cloud-incident-timeline-dev-timeline-queue
+```
+
+Timeline dead-letter queue:
+
+```text
+cloud-incident-timeline-dev-timeline-dlq
+```
+
+Audit queue (for audit-worker):
 
 ```text
 cloud-incident-timeline-dev-audit-queue
 ```
 
-Audit dead-letter queue (from Terraform):
+Audit dead-letter queue:
 
 ```text
 cloud-incident-timeline-dev-audit-dlq
 ```
 
-**Note**: `timeline-service` currently consumes from the same audit queue as `audit-worker` as a shared queue implementation. This requires careful handling to avoid duplicate processing. For production, consider provisioning a separate `timeline-events-queue`.
-
-Current routing:
+EventBridge routing:
 
 ```text
 EventBridge
-└── cloud-incident-timeline-dev-audit-queue
-    (consumed by both timeline-service and audit-worker)
+├── cloud-incident-timeline-dev-timeline-queue (timeline-service consumer)
+└── cloud-incident-timeline-dev-audit-queue (audit-worker consumer)
 ```
+
+Both consumers receive their own copy of each event independently.
 
 ---
 
-## 3.3 Queue Implementation Note
+## 3.3 Queue Architecture
 
-**MVP Compromise**: The current Terraform infrastructure provisions only one audit queue shared between `timeline-service` and `audit-worker`. Both services consume from:
+Each service is assigned a dedicated queue to ensure:
 
-```text
-cloud-incident-timeline-dev-audit-queue
-```
+1. **No competing consumers**: Each message is processed by exactly one service type.
+2. **Independent scaling**: Services can be scaled independently without affecting message distribution.
+3. **Fault isolation**: If one consumer is down, the other continues processing its queue.
+4. **Clean separation of concerns**: `timeline-service` owns timeline queue, `audit-worker` owns audit queue.
 
-This creates competing consumers—each message is processed by only one service, not both.
-
-**For future enhancement**: Implement separate queues (one for timeline, one for audit) to ensure each service receives a copy of every event. This requires:
-
-1. Creating `cloud-incident-timeline-dev-timeline-queue`
-2. Creating EventBridge rule to route to both queues
-3. Updating timeline-service to consume from its dedicated queue
-
-**Current workaround**: Code must handle the fact that services compete for messages. Idempotency becomes critical—if a service crashes mid-processing, the message may be retried by either service.
+EventBridge routes all domain events to both queues simultaneously, ensuring each service receives a complete copy of events it needs to process.
 
 ---
 
@@ -865,7 +870,11 @@ Response:
 
 ## 8.1 `timeline-service` event consumer
 
-The `timeline-service` must consume messages from `timeline-events-queue`.
+The `timeline-service` must consume messages from its dedicated queue:
+
+```text
+cloud-incident-timeline-dev-timeline-queue
+```
 
 It should process the following event types:
 
@@ -979,7 +988,11 @@ Incident resolved.
 
 ## 8.2 `audit-worker` event consumer
 
-The `audit-worker` must consume messages from `audit-events-queue`.
+The `audit-worker` must consume messages from its dedicated queue:
+
+```text
+cloud-incident-timeline-dev-audit-queue
+```
 
 It should process the following event types:
 
@@ -1208,10 +1221,8 @@ Required environment variables (from Terraform):
 ```text
 AWS_REGION = aws region (e.g., us-east-1)
 TIMELINE_TABLE_NAME = cloud-incident-timeline-dev-incident-timeline
-AUDIT_QUEUE_URL = https://sqs.<region>.amazonaws.com/<account>/cloud-incident-timeline-dev-audit-queue
+TIMELINE_QUEUE_URL = https://sqs.<region>.amazonaws.com/<account>/cloud-incident-timeline-dev-timeline-queue
 ```
-
-**MVP Note**: `timeline-service` consumes from the same `AUDIT_QUEUE_URL` as `audit-worker`. Both services are competing consumers. Update to use a dedicated `TIMELINE_QUEUE_URL` once separate queue is provisioned.
 
 `EVENT_BUS_NAME` is required only if the service implements `POST /incidents/{incident_id}/timeline/comments` and emits `TimelineCommentAdded`:
 
