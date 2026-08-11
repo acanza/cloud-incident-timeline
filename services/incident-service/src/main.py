@@ -101,7 +101,7 @@ async def health_check():
 
 
 # Startup event
-@app.on_event("startup")
+@app.lifespan("startup")
 async def startup_event():
     """Application startup event."""
     logger.info(
@@ -116,7 +116,7 @@ async def startup_event():
 
 
 # Shutdown event
-@app.on_event("shutdown")
+@app.lifespan("shutdown")
 async def shutdown_event():
     """Application shutdown event."""
     logger.info(
