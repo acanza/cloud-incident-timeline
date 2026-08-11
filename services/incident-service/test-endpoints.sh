@@ -12,19 +12,21 @@ echo "Testing Incident Service API"
 echo "================================================"
 echo ""
 
-# Check if the command 'python' is available. If not, print an error message and replace it with 'python3' if available.
-if ! command -v python &> /dev/null; then
-    if command -v python3 &> /dev/null; then
-        alias python=python3
-    else
-        echo "Error: 'python' command not found. Please install Python and ensure it's in your PATH."
-        exit 1
-    fi
+# Detect Python interpreter: prefer 'python', fall back to 'python3'
+if command -v python &> /dev/null; then
+    PYTHON_CMD="python"
+elif command -v python3 &> /dev/null; then
+    PYTHON_CMD="python3"
+else
+    echo "Error: Neither 'python' nor 'python3' found. Please install Python and ensure it's in your PATH."
+    exit 1
 fi
+
+echo "Using Python interpreter: $PYTHON_CMD"
 
 # 1. Health check
 echo "1. Health check..."
-curl -s "$BASE_URL/health" | python -m json.tool
+curl -s "$BASE_URL/health" | $PYTHON_CMD -m json.tool
 echo ""
 echo ""
 
@@ -42,21 +44,21 @@ RESPONSE=$(curl -s -X POST "$BASE_URL/incidents" \
     }
   }')
 
-echo "$RESPONSE" | python -m json.tool
-INCIDENT_ID=$(echo "$RESPONSE" | python -c "import sys, json; print(json.load(sys.stdin)['incident_id'])")
+echo "$RESPONSE" | $PYTHON_CMD -m json.tool
+INCIDENT_ID=$(echo "$RESPONSE" | $PYTHON_CMD -c "import sys, json; print(json.load(sys.stdin)['incident_id'])")
 echo "Created incident: $INCIDENT_ID"
 echo ""
 echo ""
 
 # 3. List incidents
 echo "3. Listing all incidents..."
-curl -s "$BASE_URL/incidents" | python -m json.tool
+curl -s "$BASE_URL/incidents" | $PYTHON_CMD -m json.tool
 echo ""
 echo ""
 
 # 4. Get incident by ID
 echo "4. Getting incident by ID ($INCIDENT_ID)..."
-curl -s "$BASE_URL/incidents/$INCIDENT_ID" | python -m json.tool
+curl -s "$BASE_URL/incidents/$INCIDENT_ID" | $PYTHON_CMD -m json.tool
 echo ""
 echo ""
 
@@ -70,7 +72,7 @@ curl -s -X PATCH "$BASE_URL/incidents/$INCIDENT_ID/status" \
       "user_id": "test-user-001",
       "email": "test@example.com"
     }
-  }' | python -m json.tool
+  }' | $PYTHON_CMD -m json.tool
 echo ""
 echo ""
 
@@ -84,7 +86,7 @@ curl -s -X PATCH "$BASE_URL/incidents/$INCIDENT_ID/severity" \
       "user_id": "test-user-001",
       "email": "test@example.com"
     }
-  }' | python -m json.tool
+  }' | $PYTHON_CMD -m json.tool
 echo ""
 echo ""
 
@@ -98,7 +100,7 @@ curl -s -X PATCH "$BASE_URL/incidents/$INCIDENT_ID/status" \
       "user_id": "test-user-001",
       "email": "test@example.com"
     }
-  }' | python -m json.tool
+  }' | $PYTHON_CMD -m json.tool
 echo ""
 echo ""
 
@@ -114,13 +116,13 @@ curl -s -X POST "$BASE_URL/incidents" \
       "user_id": "test-user-001",
       "email": "test@example.com"
     }
-  }' | python -m json.tool
+  }' | $PYTHON_CMD -m json.tool
 echo ""
 echo ""
 
 # 9. Test 404 error
 echo "9. Testing 404 error (incident not found)..."
-curl -s "$BASE_URL/incidents/inc-nonexistent" | python -m json.tool
+curl -s "$BASE_URL/incidents/inc-nonexistent" | $PYTHON_CMD -m json.tool
 echo ""
 echo ""
 
