@@ -13,6 +13,7 @@ from logger import get_structured_logger
 from context import CorrelationIdMiddleware, get_correlation_id
 from utils import ValidationError
 from schemas import ErrorResponseSchema
+from routes.incidents import router as incidents_router
 
 # Initialize logger
 logger = get_structured_logger(
@@ -32,6 +33,9 @@ app = FastAPI(
 
 # Register Correlation ID middleware
 app.add_middleware(CorrelationIdMiddleware)
+
+# Register routes
+app.include_router(incidents_router)
 
 
 # Exception handlers

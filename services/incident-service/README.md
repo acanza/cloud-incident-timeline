@@ -23,9 +23,16 @@ incident-service/
 │   ├── logger.py            # Structured logging configuration
 │   ├── context.py           # Correlation ID handling
 │   ├── utils.py             # Utilities and validation
-│   ├── services/            # Business logic (next phase)
-│   ├── handlers/            # Endpoint handlers (next phase)
-│   └── models/              # Data models (next phase)
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── incident.py      # Incident domain model
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── incident_service.py    # Incident business logic
+│   │   └── event_publisher.py     # Event publishing
+│   └── routes/
+│       ├── __init__.py
+│       └── incidents.py           # Incident API endpoints
 ├── Dockerfile               # Docker image
 ├── .dockerignore            # Files to ignore in build
 ├── requirements.txt         # Python dependencies
@@ -97,6 +104,160 @@ Expected response:
 {
   "status": "ok",
   "service": "incident-service"
+}
+```
+
+## Phase 2: HTTP API Endpoints
+
+All endpoints return consistent error responses and include Correlation ID.
+
+### Create Incident
+
+```bash
+curl -X POST http://localhost:8001/incidents \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "API latency spike",
+    "description": "The public API is responding slowly",
+    "severity": "HIGH",
+    "actor": {
+      "user_id": "user-001",
+      "email": "user@example.com"
+    }
+  }'
+```
+
+Response (201 Created):
+```json
+{
+  "incident_id": "inc-a1b2c3d4e5f6",
+  "title": "API latency spike",
+  "description": "The public API is responding slowly",
+  "severity": "HIGH",
+  "status": "OPEN",
+  "created_at": "2026-08-11T10:30:00Z",
+  "updated_at": "2026-08-11T10:30:00Z"
+}
+```
+
+### List Incidents
+
+```bash
+curl http://localhost:8001/incidents
+```
+
+Response (200 OK):
+```json
+{
+  "items": [
+    {
+      "incident_id": "inc-a1b2c3d4e5f6",
+      "title": "API latency spike",
+      "description": "The public API is responding slowly",
+      "severity": "HIGH",
+      "status": "OPEN",
+      "created_at": "2026-08-11T10:30:00Z",
+      "updated_at": "2026-08-11T10:30:00Z"
+    }
+  ]
+}
+```
+
+### Get Incident by ID
+
+```bash
+curl http://localhost:8001/incidents/inc-a1b2c3d4e5f6
+```
+
+Response (200 OK):
+```json
+{
+  "incident_id": "inc-a1b2c3d4e5f6",
+  "title": "API latency spike",
+  "description": "The public API is responding slowly",
+  "severity": "HIGH",
+  "status": "OPEN",
+  "created_at": "2026-08-11T10:30:00Z",
+  "updated_at": "2026-08-11T10:30:00Z"
+}
+```
+
+### Update Incident Status
+
+```bash
+curl -X PATCH http://localhost:8001/incidents/inc-a1b2c3d4e5f6/status \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "INVESTIGATING",
+    "actor": {
+      "user_id": "user-001",
+      "email": "user@example.com"
+    }
+  }'
+```
+
+Response (200 OK):
+```json
+{
+  "incident_id": "inc-a1b2c3d4e5f6",
+  "title": "API latency spike",
+  "description": "The public API is responding slowly",
+  "severity": "HIGH",
+  "status": "INVESTIGATING",
+  "created_at": "2026-08-11T10:30:00Z",
+  "updated_at": "2026-08-11T10:35:00Z"
+}
+```
+
+### Update Incident Severity
+
+```bash
+curl -X PATCH http://localhost:8001/incidents/inc-a1b2c3d4e5f6/severity \
+  -H "Content-Type: application/json" \
+  -d '{
+    "severity": "CRITICAL",
+    "actor": {
+      "user_id": "user-001",
+      "email": "user@example.com"
+    }
+  }'
+```
+
+Response (200 OK):
+```json
+{
+  "incident_id": "inc-a1b2c3d4e5f6",
+  "title": "API latency spike",
+  "description": "The public API is responding slowly",
+  "severity": "CRITICAL",
+  "status": "INVESTIGATING",
+  "created_at": "2026-08-11T10:30:00Z",
+  "updated_at": "2026-08-11T10:40:00Z"
+}
+```
+
+### Error Response Example
+
+```bash
+curl -X POST http://localhost:8001/incidents \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Test",
+    "description": "Test",
+    "severity": "INVALID"
+  }'
+```
+
+Response (400 Bad Request):
+```json
+{
+  "message": "Validation error",
+  "details": [
+    {
+      "field": "severity",
+      "message": "Invalid severity. Must be one of: LOW, MEDIUM, HIGH, CRITICAL"
+    }
+  ]
 }
 ```
 
@@ -192,6 +353,39 @@ Valid severities:
 - `HIGH`
 - `CRITICAL`
 
+## Phase 2 Implementation
+
+### ✅ HTTP Endpoints Implemented
+
+- ✅ `GET /health` - Health check for ALB/ECS
+- ✅ `POST /incidents` - Create new incident, publishes IncidentCreated event
+- ✅ `GET /incidents` - List all incidents
+- ✅ `GET /incidents/{incident_id}` - Get incident by ID
+- ✅ `PATCH /incidents/{incident_id}/status` - Update status, publishes IncidentStatusChanged or IncidentResolved
+- ✅ `PATCH /incidents/{incident_id}/severity` - Update severity, publishes IncidentSeverityChanged
+
+### ✅ Core Components
+
+- **models/incident.py**: Domain model with validation
+- **services/incident_service.py**: Business logic (in-memory storage, will be DynamoDB in Phase 3)
+- **services/event_publisher.py**: Event publishing (logging stubs, will be EventBridge in Phase 4)
+- **routes/incidents.py**: FastAPI endpoints with full error handling
+
+### ✅ Features
+
+- Request validation with detailed error responses
+- Event publishing on state changes
+- Correlation ID propagation in all logs
+- Structured JSON logging
+- Complete HTTP error handling
+- Interactive API documentation at `/docs`
+
+### Current Limitations (To Be Addressed)
+
+- **Phase 3**: Replace in-memory storage with DynamoDB
+- **Phase 4**: Replace event logging with actual EventBridge integration
+- **Phase 5**: Add timeline and audit consumer routing
+
 ## Testing
 
 ```bash
@@ -204,10 +398,9 @@ python -m pytest --cov=src
 
 ## Next Phases
 
-- **Phase 2**: Implement HTTP endpoints
-- **Phase 3**: DynamoDB integration
-- **Phase 4**: EventBridge publishing
-- **Phase 5**: E2E verification
+- **Phase 3**: DynamoDB integration (replace in-memory storage)
+- **Phase 4**: EventBridge publishing (replace event logging)
+- **Phase 5**: E2E verification with consumers
 
 ## References
 
