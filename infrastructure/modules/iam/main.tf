@@ -106,6 +106,21 @@ data "aws_iam_policy_document" "timeline_service_task_policy" {
     actions   = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:Query", "dynamodb:Scan"]
     resources = [var.timeline_table_arn]
   }
+
+  statement {
+    sid     = "SQSTimelineQueueAccess"
+    actions = ["sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
+    resources = [
+      var.timeline_queue_arn != "" ? var.timeline_queue_arn : "arn:aws:sqs:*:*:${local.name_prefix}-timeline-queue"
+    ]
+  }
+
+  # Optional: For posting timeline comments
+  statement {
+    sid       = "EventBridgePutEvents"
+    actions   = ["events:PutEvents"]
+    resources = [var.event_bus_arn != "" ? var.event_bus_arn : "arn:aws:events:*:*:event-bus/${local.name_prefix}-event-bus"]
+  }
 }
 
 resource "aws_iam_role_policy" "timeline_service_task_policy" {
