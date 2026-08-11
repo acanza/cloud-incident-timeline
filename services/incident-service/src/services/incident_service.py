@@ -4,8 +4,8 @@ import uuid
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from models.incident import Incident
-from constants import (
+from ..models.incident import Incident
+from ..constants import (
     IncidentStatus, IncidentSeverity,
     EVENT_TYPE_INCIDENT_CREATED,
     EVENT_TYPE_INCIDENT_STATUS_CHANGED,

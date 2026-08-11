@@ -3,12 +3,12 @@
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from constants import (
+from ..constants import (
     EVENT_SCHEMA_VERSION,
     SERVICE_NAME
 )
-from context import get_correlation_id
-from logger import get_structured_logger
+from ..context import get_correlation_id
+from ..logger import get_structured_logger
 
 
 logger = get_structured_logger(__name__, service_name=SERVICE_NAME)

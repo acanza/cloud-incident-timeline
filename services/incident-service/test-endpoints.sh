@@ -23,16 +23,34 @@ else
 fi
 
 echo "Using Python interpreter: $PYTHON_CMD"
+echo ""
+
+# Pre-flight check: verify service is running
+echo "Checking if service is running at $BASE_URL..."
+if ! curl -s --max-time 5 "$BASE_URL/health" > /dev/null 2>&1; then
+    echo "❌ ERROR: Service is not responding at $BASE_URL"
+    echo ""
+    echo "Make sure the service is running:"
+    echo "  cd services/incident-service"
+    echo "  python3 -m venv venv"
+    echo "  source venv/bin/activate"
+    echo "  pip install -r requirements.txt"
+    echo "  python3 -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8001"
+    echo ""
+    exit 1
+fi
+echo "✅ Service is reachable"
+echo ""
 
 # 1. Health check
 echo "1. Health check..."
-curl -s "$BASE_URL/health" | $PYTHON_CMD -m json.tool
+curl -s --max-time 10 "$BASE_URL/health" | $PYTHON_CMD -m json.tool
 echo ""
 echo ""
 
 # 2. Create incident
 echo "2. Creating incident..."
-RESPONSE=$(curl -s -X POST "$BASE_URL/incidents" \
+RESPONSE=$(curl -s --max-time 10 -X POST "$BASE_URL/incidents" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Database CPU spike",
@@ -52,19 +70,19 @@ echo ""
 
 # 3. List incidents
 echo "3. Listing all incidents..."
-curl -s "$BASE_URL/incidents" | $PYTHON_CMD -m json.tool
+curl -s --max-time 10 "$BASE_URL/incidents" | $PYTHON_CMD -m json.tool
 echo ""
 echo ""
 
 # 4. Get incident by ID
 echo "4. Getting incident by ID ($INCIDENT_ID)..."
-curl -s "$BASE_URL/incidents/$INCIDENT_ID" | $PYTHON_CMD -m json.tool
+curl -s --max-time 10 "$BASE_URL/incidents/$INCIDENT_ID" | $PYTHON_CMD -m json.tool
 echo ""
 echo ""
 
 # 5. Update status to INVESTIGATING
 echo "5. Updating status to INVESTIGATING..."
-curl -s -X PATCH "$BASE_URL/incidents/$INCIDENT_ID/status" \
+curl -s --max-time 10 -X PATCH "$BASE_URL/incidents/$INCIDENT_ID/status" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "INVESTIGATING",
@@ -78,7 +96,7 @@ echo ""
 
 # 6. Update severity to CRITICAL
 echo "6. Updating severity to CRITICAL..."
-curl -s -X PATCH "$BASE_URL/incidents/$INCIDENT_ID/severity" \
+curl -s --max-time 10 -X PATCH "$BASE_URL/incidents/$INCIDENT_ID/severity" \
   -H "Content-Type: application/json" \
   -d '{
     "severity": "CRITICAL",
@@ -92,7 +110,7 @@ echo ""
 
 # 7. Resolve incident
 echo "7. Resolving incident..."
-curl -s -X PATCH "$BASE_URL/incidents/$INCIDENT_ID/status" \
+curl -s --max-time 10 -X PATCH "$BASE_URL/incidents/$INCIDENT_ID/status" \
   -H "Content-Type: application/json" \
   -d '{
     "status": "RESOLVED",
@@ -106,7 +124,7 @@ echo ""
 
 # 8. Test validation error
 echo "8. Testing validation error (invalid severity)..."
-curl -s -X POST "$BASE_URL/incidents" \
+curl -s --max-time 10 -X POST "$BASE_URL/incidents" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Test",
@@ -122,7 +140,7 @@ echo ""
 
 # 9. Test 404 error
 echo "9. Testing 404 error (incident not found)..."
-curl -s "$BASE_URL/incidents/inc-nonexistent" | $PYTHON_CMD -m json.tool
+curl -s --max-time 10 "$BASE_URL/incidents/inc-nonexistent" | $PYTHON_CMD -m json.tool
 echo ""
 echo ""
 

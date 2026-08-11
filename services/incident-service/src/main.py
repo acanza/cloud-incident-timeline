@@ -8,12 +8,12 @@ from fastapi.responses import JSONResponse
 from starlette.middleware import Middleware
 import logging
 
-from config import settings
-from logger import get_structured_logger
-from context import CorrelationIdMiddleware, get_correlation_id
-from utils import ValidationError
-from schemas import ErrorResponseSchema
-from routes.incidents import router as incidents_router
+from .config import settings
+from .logger import get_structured_logger
+from .context import CorrelationIdMiddleware, get_correlation_id
+from .utils import ValidationError
+from .schemas import ErrorResponseSchema
+from .routes.incidents import router as incidents_router
 
 # Initialize logger
 logger = get_structured_logger(

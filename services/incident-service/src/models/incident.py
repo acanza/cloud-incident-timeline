@@ -3,7 +3,7 @@
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from typing import Optional
-from constants import IncidentStatus, IncidentSeverity
+from ..constants import IncidentStatus, IncidentSeverity
 
 
 @dataclass

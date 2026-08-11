@@ -3,24 +3,24 @@
 from fastapi import APIRouter, status, HTTPException
 from typing import Optional
 
-from context import get_correlation_id
-from logger import get_structured_logger
-from schemas import (
+from ..context import get_correlation_id
+from ..logger import get_structured_logger
+from ..schemas import (
     CreateIncidentRequestSchema,
     UpdateStatusRequestSchema,
     UpdateSeverityRequestSchema,
     IncidentSchema,
     IncidentsListResponseSchema
 )
-from utils import (
+from ..utils import (
     ValidationError,
     validate_create_incident_request,
     validate_status_change,
     validate_severity_change
 )
-from services.incident_service import incident_service
-from services.event_publisher import event_publisher
-from constants import SERVICE_NAME
+from ..services.incident_service import incident_service
+from ..services.event_publisher import event_publisher
+from ..constants import SERVICE_NAME
 
 
 logger = get_structured_logger(__name__, service_name=SERVICE_NAME)

@@ -3,8 +3,8 @@ Shared utilities: validation, error handling, etc.
 """
 
 from typing import Optional, List
-from schemas import ErrorResponseSchema, ErrorDetailSchema
-from constants import VALID_STATUSES, VALID_SEVERITIES
+from .schemas import ErrorResponseSchema, ErrorDetailSchema
+from .constants import VALID_STATUSES, VALID_SEVERITIES
 
 
 class ValidationError(Exception):
