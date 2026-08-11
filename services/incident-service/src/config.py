@@ -1,5 +1,5 @@
 """
-Configuración de la aplicación desde variables de entorno.
+Application configuration from environment variables.
 """
 
 import os
@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Configuración de la aplicación."""
+    """Application settings."""
     
     # AWS
     aws_region: str = os.getenv('AWS_REGION', 'eu-west-3')
@@ -27,5 +27,5 @@ class Settings(BaseSettings):
         case_sensitive = False
 
 
-# Instancia global de configuración
+# Global configuration instance
 settings = Settings()

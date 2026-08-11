@@ -1,12 +1,12 @@
 """
-Constantes y enumeraciones compartidas para incident-service.
+Shared constants and enumerations for incident-service.
 """
 
 from enum import Enum
 
 
 class IncidentStatus(str, Enum):
-    """Estados válidos de un incidente."""
+    """Valid incident statuses."""
     OPEN = "OPEN"
     INVESTIGATING = "INVESTIGATING"
     RESOLVED = "RESOLVED"
@@ -14,14 +14,14 @@ class IncidentStatus(str, Enum):
 
 
 class IncidentSeverity(str, Enum):
-    """Niveles de severidad válidos."""
+    """Valid severity levels."""
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
     CRITICAL = "CRITICAL"
 
 
-# Estados válidos como lista (para validaciones)
+# Valid statuses as list (for validation)
 VALID_STATUSES = [status.value for status in IncidentStatus]
 VALID_SEVERITIES = [severity.value for severity in IncidentSeverity]
 

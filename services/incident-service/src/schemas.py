@@ -1,5 +1,5 @@
 """
-Schemas Pydantic para request/response y event envelopes.
+Pydantic schemas for request/response and event envelopes.
 """
 
 from typing import Any, Dict, Optional
@@ -8,9 +8,9 @@ from pydantic import BaseModel, Field
 
 
 class ActorSchema(BaseModel):
-    """Representa al actor que desencadena una acción."""
-    user_id: str = Field(..., description="ID del usuario o sistema")
-    email: Optional[str] = Field(None, description="Email del usuario (opcional)")
+    """Represents the actor that triggers an action."""
+    user_id: str = Field(..., description="User or system ID")
+    email: Optional[str] = Field(None, description="User email (optional)")
 
     model_config = {"json_schema_extra": {"example": {
         "user_id": "user-001",
@@ -19,21 +19,21 @@ class ActorSchema(BaseModel):
 
 
 class EventDataSchema(BaseModel):
-    """Clase base flexible para datos de eventos."""
+    """Flexible base class for event data."""
     class Config:
         extra = "allow"
 
 
 class EventEnvelopeSchema(BaseModel):
-    """Envelope estándar para todos los eventos publicados a EventBridge."""
-    version: str = Field(..., description="Versión del schema de evento")
-    event_id: str = Field(..., description="ID único del evento")
-    event_type: str = Field(..., description="Tipo de evento (IncidentCreated, etc.)")
-    source: str = Field(..., description="Servicio que emitió el evento")
-    occurred_at: str = Field(..., description="Timestamp UTC cuando ocurrió el evento")
-    correlation_id: str = Field(..., description="ID para trazar el flujo de la solicitud")
-    actor: ActorSchema = Field(..., description="Usuario o sistema que desencadenó la acción")
-    data: Dict[str, Any] = Field(..., description="Datos específicos del evento")
+    """Standard envelope for all events published to EventBridge."""
+    version: str = Field(..., description="Event schema version")
+    event_id: str = Field(..., description="Unique event identifier")
+    event_type: str = Field(..., description="Event type (IncidentCreated, etc.)")
+    source: str = Field(..., description="Service that emitted the event")
+    occurred_at: str = Field(..., description="UTC timestamp when the event occurred")
+    correlation_id: str = Field(..., description="ID to trace the request flow")
+    actor: ActorSchema = Field(..., description="User or system that triggered the action")
+    data: Dict[str, Any] = Field(..., description="Event-specific data")
 
     model_config = {"json_schema_extra": {"example": {
         "version": "1.0",
@@ -51,17 +51,17 @@ class EventEnvelopeSchema(BaseModel):
 
 
 class ErrorDetailSchema(BaseModel):
-    """Detalle de un error de validación."""
-    field: str = Field(..., description="Campo con error")
-    message: str = Field(..., description="Mensaje de error")
+    """Error validation detail."""
+    field: str = Field(..., description="Field with error")
+    message: str = Field(..., description="Error message")
 
 
 class ErrorResponseSchema(BaseModel):
-    """Formato estándar de respuesta de error."""
-    message: str = Field(..., description="Mensaje de error principal")
+    """Standard error response format."""
+    message: str = Field(..., description="Main error message")
     details: Optional[list[ErrorDetailSchema]] = Field(
         None,
-        description="Detalles adicionales de errores (ej: validación)"
+        description="Additional error details (e.g., validation)"
     )
 
     model_config = {"json_schema_extra": {"example": {
@@ -73,14 +73,14 @@ class ErrorResponseSchema(BaseModel):
 
 
 class IncidentSchema(BaseModel):
-    """Modelo de un incidente."""
-    incident_id: str = Field(..., description="ID único del incidente")
-    title: str = Field(..., description="Título del incidente")
-    description: str = Field(..., description="Descripción detallada")
-    severity: str = Field(..., description="Severidad: LOW, MEDIUM, HIGH, CRITICAL")
-    status: str = Field(..., description="Estado: OPEN, INVESTIGATING, RESOLVED, CLOSED")
-    created_at: str = Field(..., description="Timestamp UTC de creación")
-    updated_at: str = Field(..., description="Timestamp UTC de última actualización")
+    """Incident model."""
+    incident_id: str = Field(..., description="Unique incident identifier")
+    title: str = Field(..., description="Incident title")
+    description: str = Field(..., description="Detailed description")
+    severity: str = Field(..., description="Severity: LOW, MEDIUM, HIGH, CRITICAL")
+    status: str = Field(..., description="Status: OPEN, INVESTIGATING, RESOLVED, CLOSED")
+    created_at: str = Field(..., description="UTC creation timestamp")
+    updated_at: str = Field(..., description="UTC last update timestamp")
 
     model_config = {"json_schema_extra": {"example": {
         "incident_id": "inc-001",
@@ -94,11 +94,11 @@ class IncidentSchema(BaseModel):
 
 
 class CreateIncidentRequestSchema(BaseModel):
-    """Schema para crear un nuevo incidente."""
-    title: str = Field(..., min_length=1, description="Título del incidente")
-    description: str = Field(..., min_length=1, description="Descripción del incidente")
-    severity: str = Field(..., description="Severidad: LOW, MEDIUM, HIGH, CRITICAL")
-    actor: ActorSchema = Field(..., description="Usuario que crea el incidente")
+    """Schema for creating a new incident."""
+    title: str = Field(..., min_length=1, description="Incident title")
+    description: str = Field(..., min_length=1, description="Incident description")
+    severity: str = Field(..., description="Severity: LOW, MEDIUM, HIGH, CRITICAL")
+    actor: ActorSchema = Field(..., description="User that creates the incident")
 
     model_config = {"json_schema_extra": {"example": {
         "title": "API latency spike",
@@ -112,9 +112,9 @@ class CreateIncidentRequestSchema(BaseModel):
 
 
 class UpdateStatusRequestSchema(BaseModel):
-    """Schema para cambiar el estado de un incidente."""
-    status: str = Field(..., description="Nuevo estado: OPEN, INVESTIGATING, RESOLVED, CLOSED")
-    actor: ActorSchema = Field(..., description="Usuario que realiza el cambio")
+    """Schema for changing incident status."""
+    status: str = Field(..., description="New status: OPEN, INVESTIGATING, RESOLVED, CLOSED")
+    actor: ActorSchema = Field(..., description="User that makes the change")
 
     model_config = {"json_schema_extra": {"example": {
         "status": "INVESTIGATING",
@@ -126,9 +126,9 @@ class UpdateStatusRequestSchema(BaseModel):
 
 
 class UpdateSeverityRequestSchema(BaseModel):
-    """Schema para cambiar la severidad de un incidente."""
-    severity: str = Field(..., description="Nueva severidad: LOW, MEDIUM, HIGH, CRITICAL")
-    actor: ActorSchema = Field(..., description="Usuario que realiza el cambio")
+    """Schema for changing incident severity."""
+    severity: str = Field(..., description="New severity: LOW, MEDIUM, HIGH, CRITICAL")
+    actor: ActorSchema = Field(..., description="User that makes the change")
 
     model_config = {"json_schema_extra": {"example": {
         "severity": "CRITICAL",
@@ -140,9 +140,9 @@ class UpdateSeverityRequestSchema(BaseModel):
 
 
 class HealthCheckResponseSchema(BaseModel):
-    """Schema para respuesta de health check."""
-    status: str = Field(..., description="Estado de salud del servicio")
-    service: str = Field(..., description="Nombre del servicio")
+    """Schema for health check response."""
+    status: str = Field(..., description="Service health status")
+    service: str = Field(..., description="Service name")
 
     model_config = {"json_schema_extra": {"example": {
         "status": "ok",
@@ -151,8 +151,8 @@ class HealthCheckResponseSchema(BaseModel):
 
 
 class IncidentsListResponseSchema(BaseModel):
-    """Schema para respuesta de lista de incidentes."""
-    items: list[IncidentSchema] = Field(..., description="Lista de incidentes")
+    """Schema for incident list response."""
+    items: list[IncidentSchema] = Field(..., description="List of incidents")
 
     model_config = {"json_schema_extra": {"example": {
         "items": []

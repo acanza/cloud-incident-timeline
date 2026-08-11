@@ -1,5 +1,5 @@
 """
-Utilidades compartidas: validaciones, manejo de errores, etc.
+Shared utilities: validation, error handling, etc.
 """
 
 from typing import Optional, List
@@ -8,7 +8,7 @@ from constants import VALID_STATUSES, VALID_SEVERITIES
 
 
 class ValidationError(Exception):
-    """Excepción personalizada para errores de validación."""
+    """Custom exception for validation errors."""
     
     def __init__(self, message: str, details: Optional[List[dict]] = None):
         self.message = message
@@ -16,7 +16,7 @@ class ValidationError(Exception):
         super().__init__(self.message)
     
     def to_response(self) -> ErrorResponseSchema:
-        """Convierte el error a una respuesta estructurada."""
+        """Converts error to structured response."""
         error_details = [
             ErrorDetailSchema(field=d.get('field', ''), message=d.get('message', ''))
             for d in self.details
@@ -26,13 +26,13 @@ class ValidationError(Exception):
 
 def validate_status(status: str) -> tuple[bool, Optional[str]]:
     """
-    Valida que el estado sea válido.
+    Validates that status is valid.
     
     Args:
-        status: Estado a validar
+        status: Status to validate
     
     Returns:
-        Tupla (es_válido, mensaje_error)
+        Tuple (is_valid, error_message)
     """
     if status not in VALID_STATUSES:
         return False, f"Invalid status. Must be one of: {', '.join(VALID_STATUSES)}"
@@ -41,13 +41,13 @@ def validate_status(status: str) -> tuple[bool, Optional[str]]:
 
 def validate_severity(severity: str) -> tuple[bool, Optional[str]]:
     """
-    Valida que la severidad sea válida.
+    Validates that severity is valid.
     
     Args:
-        severity: Severidad a validar
+        severity: Severity to validate
     
     Returns:
-        Tupla (es_válido, mensaje_error)
+        Tuple (is_valid, error_message)
     """
     if severity not in VALID_SEVERITIES:
         return False, f"Invalid severity. Must be one of: {', '.join(VALID_SEVERITIES)}"
@@ -60,15 +60,15 @@ def validate_create_incident_request(
     severity: str
 ) -> tuple[bool, Optional[ValidationError]]:
     """
-    Valida una solicitud de creación de incidente.
+    Validates create incident request.
     
     Args:
-        title: Título del incidente
-        description: Descripción del incidente
-        severity: Severidad del incidente
+        title: Incident title
+        description: Incident description
+        severity: Incident severity
     
     Returns:
-        Tupla (es_válido, error_object_o_None)
+        Tuple (is_valid, error_object_or_none)
     """
     details = []
     
@@ -90,13 +90,13 @@ def validate_create_incident_request(
 
 def validate_status_change(new_status: str) -> tuple[bool, Optional[ValidationError]]:
     """
-    Valida un cambio de estado.
+    Validates status change.
     
     Args:
-        new_status: Nuevo estado
+        new_status: New status
     
     Returns:
-        Tupla (es_válido, error_object_o_None)
+        Tuple (is_valid, error_object_or_none)
     """
     is_valid, error_msg = validate_status(new_status)
     
@@ -109,13 +109,13 @@ def validate_status_change(new_status: str) -> tuple[bool, Optional[ValidationEr
 
 def validate_severity_change(new_severity: str) -> tuple[bool, Optional[ValidationError]]:
     """
-    Valida un cambio de severidad.
+    Validates severity change.
     
     Args:
-        new_severity: Nueva severidad
+        new_severity: New severity
     
     Returns:
-        Tupla (es_válido, error_object_o_None)
+        Tuple (is_valid, error_object_or_none)
     """
     is_valid, error_msg = validate_severity(new_severity)
     

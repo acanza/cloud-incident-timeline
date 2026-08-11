@@ -1,5 +1,5 @@
 """
-Configuración de logging estructurado en formato JSON.
+Structured JSON logging configuration.
 """
 
 import logging
@@ -16,26 +16,26 @@ def get_structured_logger(
     log_level: str = "INFO"
 ) -> logging.Logger:
     """
-    Crea un logger con salida en formato JSON estructurado.
+    Creates a logger with structured JSON output.
     
     Args:
-        logger_name: Nombre del logger (típicamente __name__)
-        service_name: Nombre del servicio para el contexto de logs
-        log_level: Nivel de log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        logger_name: Logger name (typically __name__)
+        service_name: Service name for logging context
+        log_level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     
     Returns:
-        Logger configurado con formato JSON
+        Logger configured with JSON format
     """
     logger = logging.getLogger(logger_name)
     logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
     
-    # Eliminar handlers existentes para evitar duplicados
+    # Remove existing handlers to avoid duplicates
     logger.handlers.clear()
     
-    # Handler a stdout con formato JSON
+    # Handler to stdout with JSON format
     handler = logging.StreamHandler(sys.stdout)
     
-    # Formatter JSON personalizado
+    # Custom JSON formatter
     json_formatter = JsonFormatterCustom(service_name=service_name)
     handler.setFormatter(json_formatter)
     
@@ -46,8 +46,8 @@ def get_structured_logger(
 
 class JsonFormatterCustom(jsonlogger.JsonFormatter):
     """
-    Formatter personalizado para logs JSON estructurados.
-    Añade timestamp, service name, y otros campos contextuales.
+    Custom formatter for structured JSON logs.
+    Adds timestamp, service name, and other contextual fields.
     """
     
     def __init__(self, service_name: str = "incident-service", *args, **kwargs):
@@ -55,23 +55,23 @@ class JsonFormatterCustom(jsonlogger.JsonFormatter):
         super().__init__(*args, **kwargs)
     
     def add_fields(self, log_record: dict, record: logging.LogRecord, message_dict: dict):
-        """Añade campos personalizados al registro de log."""
+        """Adds custom fields to log record."""
         
-        # Timestamp en ISO format
+        # Timestamp in ISO format
         log_record['timestamp'] = datetime.utcnow().isoformat() + 'Z'
         
-        # Información estándar de logging
+        # Standard logging information
         log_record['level'] = record.levelname
         log_record['service'] = self.service_name
         log_record['message'] = record.getMessage()
         log_record['logger'] = record.name
         
-        # Añadir información de exception si la hay
+        # Add exception information if present
         if record.exc_info:
             log_record['exception'] = self.formatException(record.exc_info)
         
-        # Preservar campos personalizados que vengan en message_dict
-        # (ej: correlation_id, event_id, incident_id)
+        # Preserve custom fields from message_dict
+        # (e.g., correlation_id, event_id, incident_id)
         if message_dict:
             log_record.update(message_dict)
 
@@ -86,16 +86,16 @@ def log_with_context(
     extra_fields: Optional[dict] = None
 ) -> None:
     """
-    Registra un mensaje con contexto adicional.
+    Logs a message with additional context.
     
     Args:
         logger: Logger instance
-        level: Nivel de log ('info', 'warning', 'error', 'debug')
-        message: Mensaje a registrar
-        correlation_id: ID de correlación opcional
-        event_id: ID de evento opcional
-        incident_id: ID de incidente opcional
-        extra_fields: Diccionario adicional de campos
+        level: Log level ('info', 'warning', 'error', 'debug')
+        message: Message to log
+        correlation_id: Optional correlation ID
+        event_id: Optional event ID
+        incident_id: Optional incident ID
+        extra_fields: Additional fields dictionary
     """
     context = {}
     
@@ -108,11 +108,11 @@ def log_with_context(
     if extra_fields:
         context.update(extra_fields)
     
-    # Usa el método de log correspondiente
+    # Use the corresponding log method
     log_method = getattr(logger, level.lower(), logger.info)
     
     if context:
-        # Pasar contexto como diccionario extra
+        # Pass context as extra dictionary
         log_method(message, extra=context)
     else:
         log_method(message)

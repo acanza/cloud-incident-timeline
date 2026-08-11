@@ -1,6 +1,6 @@
 """
-Entrada principal de la aplicación incident-service.
-Inicializa FastAPI con convenciones de la Fase 1.
+Incident service main entry point.
+Initializes FastAPI with Phase 1 conventions.
 """
 
 from fastapi import FastAPI, Request, status
@@ -14,7 +14,7 @@ from context import CorrelationIdMiddleware, get_correlation_id
 from utils import ValidationError
 from schemas import ErrorResponseSchema
 
-# Inicializar logger
+# Initialize logger
 logger = get_structured_logger(
     logger_name=__name__,
     service_name=settings.service_name,
@@ -22,7 +22,7 @@ logger = get_structured_logger(
 )
 
 
-# Crear aplicación FastAPI
+# Create FastAPI application
 app = FastAPI(
     title="Incident Service",
     description="HTTP API for incident management",
@@ -30,14 +30,14 @@ app = FastAPI(
 )
 
 
-# Registrar middleware de Correlation ID
+# Register Correlation ID middleware
 app.add_middleware(CorrelationIdMiddleware)
 
 
 # Exception handlers
 @app.exception_handler(ValidationError)
 async def validation_error_handler(request: Request, exc: ValidationError):
-    """Manejador de errores de validación."""
+    """Handles validation errors."""
     correlation_id = get_correlation_id()
     
     logger.warning(
@@ -58,7 +58,7 @@ async def validation_error_handler(request: Request, exc: ValidationError):
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    """Manejador genérico de excepciones no capturadas."""
+    """Handles uncaught exceptions."""
     correlation_id = get_correlation_id()
     
     logger.error(
@@ -86,7 +86,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 # Health check endpoint
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """Health check endpoint para ALB y ECS."""
+    """Health check endpoint for ALB and ECS."""
     correlation_id = get_correlation_id()
     
     logger.debug(
@@ -103,7 +103,7 @@ async def health_check():
 # Startup event
 @app.on_event("startup")
 async def startup_event():
-    """Evento de inicio de la aplicación."""
+    """Application startup event."""
     logger.info(
         f"{settings.service_name} started",
         extra={
@@ -118,7 +118,7 @@ async def startup_event():
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Evento de cierre de la aplicación."""
+    """Application shutdown event."""
     logger.info(
         f"{settings.service_name} shutting down",
         extra={'service': settings.service_name}
@@ -132,5 +132,5 @@ if __name__ == "__main__":
         app,
         host=settings.host,
         port=settings.port,
-        log_config=None  # Usar nuestro logger personalizado
+        log_config=None  # Use our custom logger
     )

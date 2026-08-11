@@ -1,42 +1,42 @@
 """
-Manejo de Correlation ID y contexto de solicitud.
+Correlation ID and request context handling.
 """
 
 import uuid
 from contextvars import ContextVar
 from typing import Optional
 
-# Variable contextual para almacenar el correlation ID
+# Context variable to store correlation ID
 _correlation_id: ContextVar[str] = ContextVar('correlation_id', default='')
 
 
 def generate_correlation_id() -> str:
     """
-    Genera un nuevo Correlation ID único.
+    Generates a new unique Correlation ID.
     
     Returns:
-        Nuevo UUID como string
+        New UUID as string
     """
     return str(uuid.uuid4())
 
 
 def set_correlation_id(correlation_id: str) -> None:
     """
-    Establece el Correlation ID para el contexto actual de la solicitud.
+    Sets correlation ID for the current request context.
     
     Args:
-        correlation_id: ID de correlación a establecer
+        correlation_id: Correlation ID to set
     """
     _correlation_id.set(correlation_id)
 
 
 def get_correlation_id() -> str:
     """
-    Obtiene el Correlation ID del contexto actual.
-    Si no existe, genera uno nuevo.
+    Gets correlation ID from current context.
+    If it doesn't exist, generates a new one.
     
     Returns:
-        Correlation ID actual
+        Current correlation ID
     """
     current_id = _correlation_id.get()
     if not current_id:
@@ -47,37 +47,37 @@ def get_correlation_id() -> str:
 
 def reset_correlation_id() -> None:
     """
-    Resetea el Correlation ID del contexto (útil para testing).
+    Resets correlation ID from context (useful for testing).
     """
     _correlation_id.set('')
 
 
 class CorrelationIdMiddleware:
     """
-    Middleware de FastAPI para manejar Correlation ID.
+    FastAPI middleware to handle Correlation ID.
     
-    Si el request trae un header 'X-Correlation-ID', lo usa.
-    Si no, genera uno nuevo.
-    Lo inyecta en el contexto para toda la solicitud.
+    If request has 'X-Correlation-ID' header, uses it.
+    If not, generates a new one.
+    Injects it into context for the entire request.
     """
     
     def __init__(self, app):
         self.app = app
     
     async def __call__(self, request, call_next):
-        # Buscar correlation ID en headers
+        # Search for correlation ID in headers
         correlation_id = request.headers.get('X-Correlation-ID')
         
         if not correlation_id:
             correlation_id = generate_correlation_id()
         
-        # Establecer en contexto
+        # Set in context
         set_correlation_id(correlation_id)
         
-        # Pasar a la siguiente capa
+        # Pass to next layer
         response = await call_next(request)
         
-        # Añadir correlation ID a la respuesta
+        # Add correlation ID to response
         response.headers['X-Correlation-ID'] = correlation_id
         
         return response
