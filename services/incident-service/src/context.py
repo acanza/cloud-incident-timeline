@@ -5,6 +5,7 @@ Correlation ID and request context handling.
 import uuid
 from contextvars import ContextVar
 from typing import Optional
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # Context variable to store correlation ID
 _correlation_id: ContextVar[str] = ContextVar('correlation_id', default='')
@@ -52,7 +53,7 @@ def reset_correlation_id() -> None:
     _correlation_id.set('')
 
 
-class CorrelationIdMiddleware:
+class CorrelationIdMiddleware(BaseHTTPMiddleware):
     """
     FastAPI middleware to handle Correlation ID.
     
@@ -61,10 +62,7 @@ class CorrelationIdMiddleware:
     Injects it into context for the entire request.
     """
     
-    def __init__(self, app):
-        self.app = app
-    
-    async def __call__(self, request, call_next):
+    async def dispatch(self, request, call_next):
         # Search for correlation ID in headers
         correlation_id = request.headers.get('X-Correlation-ID')
         
