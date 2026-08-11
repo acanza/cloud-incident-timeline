@@ -12,6 +12,16 @@ echo "Testing Incident Service API"
 echo "================================================"
 echo ""
 
+# Check if the command 'python' is available. If not, print an error message and replace it with 'python3' if available.
+if ! command -v python &> /dev/null; then
+    if command -v python3 &> /dev/null; then
+        alias python=python3
+    else
+        echo "Error: 'python' command not found. Please install Python and ensure it's in your PATH."
+        exit 1
+    fi
+fi
+
 # 1. Health check
 echo "1. Health check..."
 curl -s "$BASE_URL/health" | python -m json.tool
