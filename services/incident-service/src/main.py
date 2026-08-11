@@ -3,6 +3,7 @@ Incident service main entry point.
 Initializes FastAPI with Phase 1 conventions.
 """
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware import Middleware
@@ -23,11 +24,40 @@ logger = get_structured_logger(
 )
 
 
+# Lifespan context manager
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan handler.
+    Startup code runs before the app starts.
+    Shutdown code runs after the app stops.
+    """
+    # Startup
+    logger.info(
+        f"{settings.service_name} started",
+        extra={
+            'service': settings.service_name,
+            'aws_region': settings.aws_region,
+            'incidents_table': settings.incidents_table_name,
+            'event_bus': settings.event_bus_name
+        }
+    )
+    
+    yield
+    
+    # Shutdown
+    logger.info(
+        f"{settings.service_name} shutting down",
+        extra={'service': settings.service_name}
+    )
+
+
 # Create FastAPI application
 app = FastAPI(
     title="Incident Service",
     description="HTTP API for incident management",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 
@@ -105,28 +135,10 @@ async def health_check():
 
 
 # Startup event
-@app.lifespan("startup")
-async def startup_event():
-    """Application startup event."""
-    logger.info(
-        f"{settings.service_name} started",
-        extra={
-            'service': settings.service_name,
-            'aws_region': settings.aws_region,
-            'incidents_table': settings.incidents_table_name,
-            'event_bus': settings.event_bus_name
-        }
-    )
-
+# Handled by lifespan context manager above
 
 # Shutdown event
-@app.lifespan("shutdown")
-async def shutdown_event():
-    """Application shutdown event."""
-    logger.info(
-        f"{settings.service_name} shutting down",
-        extra={'service': settings.service_name}
-    )
+# Handled by lifespan context manager above
 
 
 if __name__ == "__main__":
