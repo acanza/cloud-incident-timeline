@@ -139,3 +139,39 @@ class TimelineCommentResponseModel(BaseModel):
                 "created_at": "2026-07-30T08:40:00Z",
             }
         }
+
+
+class SQSMessageModel(BaseModel):
+    """Model for SQS message structure received from queue."""
+
+    MessageId: str
+    ReceiptHandle: str
+    Body: str
+    Attributes: dict
+    MessageAttributes: dict = {}
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "MessageId": "msg-123",
+                "ReceiptHandle": "AQEBCoveHandler==",
+                "Body": '{"version":"1.0","event_id":"evt-001",...}',
+                "Attributes": {},
+                "MessageAttributes": {},
+            }
+        }
+
+
+class ValidationErrorDetailModel(BaseModel):
+    """Detailed validation error information."""
+
+    field: str = Field(..., description="Field that failed validation")
+    reason: str = Field(..., description="Reason for validation failure")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "field": "incident_id",
+                "reason": "Invalid format",
+            }
+        }
