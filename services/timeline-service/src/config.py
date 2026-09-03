@@ -30,7 +30,7 @@ class Config:
     # Service Configuration
     SERVICE_NAME: str = os.getenv("SERVICE_NAME", "timeline-service")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
-    PORT: int = int(os.getenv("PORT", 80))
+    PORT: int = int(os.getenv("PORT", 8080))
 
     @classmethod
     def validate(cls) -> None:
