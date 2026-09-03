@@ -1,5 +1,6 @@
 services:
   timeline-service:
+    image: timeline-service:dev
     build:
       context: .
       dockerfile: Dockerfile
@@ -23,6 +24,9 @@ services:
       SERVICE_NAME: timeline-service
       LOG_LEVEL: DEBUG
       PORT: 8080
+      
+      # SQS Consumer (set to "true" to enable, requires AWS credentials)
+      START_CONSUMER: "false"
     
     # Use host networking to access local AWS services/mocks
     # network_mode: host

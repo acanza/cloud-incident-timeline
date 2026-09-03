@@ -8,6 +8,7 @@ set -e
 SERVICE_NAME="${SERVICE_NAME:-timeline-service}"
 LOG_LEVEL="${LOG_LEVEL:-INFO}"
 PORT="${PORT:-8080}"
+START_CONSUMER="${START_CONSUMER:-false}"
 
 echo "=========================================="
 echo "Timeline Service Starting Up"
@@ -15,6 +16,7 @@ echo "=========================================="
 echo "Service: $SERVICE_NAME"
 echo "Port: $PORT"
 echo "Log Level: $LOG_LEVEL"
+echo "SQS Consumer: $START_CONSUMER"
 echo ""
 
 # Function to handle signals (graceful shutdown)
@@ -61,9 +63,10 @@ echo ""
 # Give FastAPI a moment to start
 sleep 2
 
-# Start SQS Consumer
-echo "Starting SQS Consumer..."
-python3 << 'EOF'
+# Start SQS Consumer (only if enabled)
+if [ "$START_CONSUMER" = "true" ]; then
+    echo "Starting SQS Consumer..."
+    python3 << 'EOF'
 from src.services.sqs_consumer import SQSConsumer
 from src.logger import setup_logger
 from src.config import Config
@@ -78,8 +81,12 @@ except Exception as e:
     logger.error(f"SQS Consumer failed to start: {str(e)}")
     sys.exit(1)
 EOF
-CONSUMER_PID=$!
-echo "SQS Consumer started (PID $CONSUMER_PID)"
+    CONSUMER_PID=$!
+    echo "SQS Consumer started (PID $CONSUMER_PID)"
+else
+    echo "SQS Consumer disabled (set START_CONSUMER=true to enable)"
+    CONSUMER_PID=""
+fi
 echo ""
 
 echo "=========================================="
@@ -92,12 +99,19 @@ echo "ReDoc: http://localhost:$PORT/redoc"
 echo ""
 echo "Processes running:"
 echo "  - FastAPI (PID $FASTAPI_PID)"
-echo "  - SQS Consumer (PID $CONSUMER_PID)"
+if [ -n "$CONSUMER_PID" ]; then
+    echo "  - SQS Consumer (PID $CONSUMER_PID)"
+fi
 echo ""
 echo "Press Ctrl+C to shutdown"
 echo "=========================================="
 echo ""
 
-# Wait for both processes
-# If either dies, the script will also exit
-wait $FASTAPI_PID $CONSUMER_PID
+# Wait for processes
+if [ -n "$CONSUMER_PID" ]; then
+    # Wait for both FastAPI and Consumer
+    wait $FASTAPI_PID $CONSUMER_PID
+else
+    # Wait only for FastAPI
+    wait $FASTAPI_PID
+fi
