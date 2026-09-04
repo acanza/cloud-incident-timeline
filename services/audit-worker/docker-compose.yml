@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  audit-worker:
+    image: audit-worker:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: audit-worker-dev
+    environment:
+      # AWS Configuration
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      
+      # DynamoDB
+      AUDIT_TABLE_NAME: ${AUDIT_TABLE_NAME:-cloud-incident-timeline-dev-audit-table}
+      
+      # SQS Queue URL
+      AUDIT_QUEUE_URL: ${AUDIT_QUEUE_URL:-https://sqs.us-east-1.amazonaws.com/123456789012/cloud-incident-timeline-dev-audit-queue}
+      
+      # Service Configuration
+      SERVICE_NAME: audit-worker
+      LOG_LEVEL: DEBUG
+    
+    # Use host networking to access local AWS services/mocks
+    # network_mode: host
+    
+    # For development: mount source code for live reload
+    # volumes:
+    #   - .:/app
+    
+    # No health check for background worker (no HTTP endpoints)
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    
+    # AWS credentials (if needed for local AWS services)
+    # env_file:
+    #   - .env
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Logging
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=audit-worker"
