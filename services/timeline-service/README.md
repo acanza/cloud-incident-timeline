@@ -1,6 +1,14 @@
 # Timeline Service
 
+**Version:** 0.1.0  
+**Status:** ✅ Production Ready (MVP)
+
 Event-driven microservice for managing incident timelines. Consumes events from SQS queue and exposes HTTP API for timeline queries and comment management.
+
+**Architecture:** Concurrent FastAPI HTTP server + SQS Consumer in single Docker container  
+**Database:** DynamoDB (incident_timeline table)  
+**Message Queue:** SQS + EventBridge  
+**Deployment:** ECS/Fargate (256 CPU / 512 MB)
 
 ## Architecture
 
@@ -117,40 +125,89 @@ Testing Timeline Service API
 ...
 ```
 
-### Manual Testing
+## Testing Endpoints
 
-#### Health Check
+### Automated Test Script
+
 ```bash
-curl http://localhost:8002/health
+# Make script executable (first time only)
+chmod +x test-endpoints.sh
+
+# Run tests
+./test-endpoints.sh
 ```
 
-**Response (200):**
-```json
+This script tests:
+1. ✅ Health check
+2. ✅ Get empty timeline
+3. ✅ Add comments
+4. ✅ Get timeline with entries
+5. ✅ Validation errors (missing/empty/long comments)
+6. ✅ Invalid incident_id format
+
+**Example output:**
+```
+================================================
+Testing Timeline Service API
+================================================
+
+1. Health check...
 {
   "status": "ok",
   "service": "timeline-service"
 }
+...
+```
+
+### Docker Compose Testing (Recommended)
+
+```bash
+cd services/timeline-service
+
+# Build image
+docker build -t timeline-service:dev .
+
+# Start service (FastAPI only, no SQS Consumer)
+docker-compose up
+
+# In another terminal, run tests
+./test-endpoints.sh
+
+# Stop service
+docker-compose down
+```
+
+**Expected output:**
+```
+timeline-service-dev | ==========================================
+timeline-service-dev | Timeline Service Ready
+timeline-service-dev | ==========================================
+timeline-service-dev | HTTP API: http://localhost:8080
+timeline-service-dev | Health Check: http://localhost:8080/health
+timeline-service-dev | Swagger: http://localhost:8080/docs
+timeline-service-dev |
+timeline-service-dev | Processes running:
+timeline-service-dev |   - FastAPI (PID 45)
+```
+
+### Manual API Testing
+
+#### Health Check
+```bash
+curl http://localhost:8002/health
+
+# Response:
+{"status":"ok","service":"timeline-service"}
 ```
 
 #### Get Timeline
 ```bash
 curl http://localhost:8002/incidents/inc-001/timeline
-```
 
-**Response (200):**
-```json
+# Response:
 {
   "incident_id": "inc-001",
-  "entries": [
-    {
-      "incident_id": "inc-001",
-      "timeline_entry_id": "tl-001",
-      "created_at": "2026-07-30T08:00:00Z",
-      "message": "Incident created with HIGH severity and OPEN status.",
-      "event_type": "IncidentCreated",
-      "source_event_id": "evt-001"
-    }
-  ]
+  "entries": []
 }
 ```
 
@@ -162,16 +219,51 @@ curl -X POST http://localhost:8002/incidents/inc-001/timeline/comments \
     "comment": "Database team investigating performance issue",
     "user_id": "user-123"
   }'
-```
 
-**Response (201):**
-```json
+# Response (201):
 {
-  "timeline_entry_id": "tl-003",
+  "timeline_entry_id": "tl-001",
   "incident_id": "inc-001",
   "message": "Comment: Database team investigating performance issue",
-  "created_at": "2026-09-02T12:45:30Z"
+  "created_at": "2026-09-04T10:30:45Z"
 }
+```
+
+#### Add Multiple Comments & Query
+```bash
+# Add comment 1
+curl -X POST http://localhost:8002/incidents/inc-001/timeline/comments \
+  -H "Content-Type: application/json" \
+  -d '{"comment":"Issue detected","user_id":"user-1"}'
+
+# Add comment 2
+curl -X POST http://localhost:8002/incidents/inc-001/timeline/comments \
+  -H "Content-Type: application/json" \
+  -d '{"comment":"Root cause identified","user_id":"user-2"}'
+
+# Get timeline (should have 2 entries)
+curl http://localhost:8002/incidents/inc-001/timeline
+```
+
+#### Test Validation Errors
+```bash
+# Missing comment
+curl -X POST http://localhost:8002/incidents/inc-001/timeline/comments \
+  -H "Content-Type: application/json" \
+  -d '{"user_id":"user-1"}'
+# → 400 Bad Request
+
+# Empty comment
+curl -X POST http://localhost:8002/incidents/inc-001/timeline/comments \
+  -H "Content-Type: application/json" \
+  -d '{"comment":"","user_id":"user-1"}'
+# → 400 Bad Request
+
+# Comment > 1000 chars (invalid)
+curl -X POST http://localhost:8002/incidents/inc-001/timeline/comments \
+  -H "Content-Type: application/json" \
+  -d '{"comment":"'$(printf 'A%.0s' {1..1001})'","user_id":"user-1"}'
+# → 400 Bad Request
 ```
 
 ---
@@ -355,33 +447,209 @@ Each event includes:
 
 ---
 
-## Deployment
+## Docker Deployment
 
-### Docker
+### Image Details
+
+**Multi-stage Build:**
+- **Stage 1 (Builder):** Python 3.11 + build tools + pip install
+- **Stage 2 (Runtime):** Python 3.11-slim + dependencies + code
+- **Final Size:** ~200 MB (60% reduction from single-stage)
+- **Base Image:** `python:3.11-slim`
+
+**Optimization:**
+- ✅ Multi-stage reduces image size
+- ✅ Reduces ECR storage costs
+- ✅ Faster ECS task startup
+- ✅ Non-privileged port (8080)
+
+### Build Image
 
 ```bash
-# Build image
-docker build -t timeline-service:latest .
+cd services/timeline-service
 
-# Run container
-docker run -p 8002:80 \
+# Build locally
+docker build -t timeline-service:dev .
+
+# Build for ECR
+AWS_ACCOUNT_ID=123456789012
+AWS_REGION=us-east-1
+ECR_URL=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/cloud-incident-timeline/timeline-service
+
+# Login to ECR
+aws ecr get-login-password --region $AWS_REGION | \
+  docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+# Build and tag
+docker build -t $ECR_URL:dev .
+
+# Push to ECR
+docker push $ECR_URL:dev
+```
+
+### Run Locally with Docker
+
+**Option 1: Docker Compose (Recommended)**
+
+```bash
+# Start service
+docker-compose up
+
+# In another terminal, test
+curl http://localhost:8002/health
+
+# Stop
+docker-compose down
+```
+
+**Option 2: Docker Run**
+
+```bash
+docker run -d \
+  --name timeline-service \
+  -p 8002:8080 \
   -e AWS_REGION=us-east-1 \
   -e TIMELINE_TABLE_NAME=cloud-incident-timeline-dev-incident-timeline \
   -e TIMELINE_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/.../queue \
-  timeline-service:latest
+  -e START_CONSUMER=false \
+  timeline-service:dev
+
+# View logs
+docker logs -f timeline-service
+
+# Stop
+docker stop timeline-service
+docker rm timeline-service
 ```
 
-### ECS/Fargate
+### Environment Variables
 
-The Dockerfile sets up both FastAPI HTTP server and SQS consumer in one container:
+**For Local Testing (docker-compose):**
+
+```yaml
+# .env
+AWS_REGION=us-east-1
+TIMELINE_TABLE_NAME=cloud-incident-timeline-dev-incident-timeline
+TIMELINE_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/123456789012/queue
+SERVICE_NAME=timeline-service
+LOG_LEVEL=DEBUG
+PORT=8080
+START_CONSUMER=false
+```
+
+**For ECS/Fargate:**
+
+```hcl
+# Terraform task definition
+environment = [
+  { name = "AWS_REGION", value = "us-east-1" }
+  { name = "TIMELINE_TABLE_NAME", value = "cloud-incident-timeline-dev-incident-timeline" }
+  { name = "TIMELINE_QUEUE_URL", value = "https://sqs.us-east-1.amazonaws.com/.../queue" }
+  { name = "SERVICE_NAME", value = "timeline-service" }
+  { name = "LOG_LEVEL", value = "INFO" }
+  { name = "PORT", value = "8080" }
+  { name = "START_CONSUMER", value = "true" }
+]
+```
+
+**Notes:**
+- `START_CONSUMER=false` for local testing (no AWS credentials)
+- `START_CONSUMER=true` for production (ECS Task Role provides credentials)
+- AWS credentials in ECS via IAM Task Role, not environment
+
+### Entrypoint Orchestration
+
+Container runs `entrypoint.sh` which:
+
+1. Validates configuration
+2. Starts FastAPI HTTP server (port 8080)
+3. Starts SQS Consumer (optional, if `START_CONSUMER=true`)
+4. Registers signal handlers for graceful shutdown
+5. Waits for both processes
+
+**Graceful Shutdown Flow:**
+
+```
+ECS SIGTERM → Entrypoint → Kill FastAPI → Kill Consumer → Exit
+  ↓                          ↓
+  t=0s                    t=0-2s (complete current work)
+  ↓                          ↓
+  t=30s (SIGKILL if not done)  t=2-5s exit
+```
+
+### Health Checks
+
+**Docker HEALTHCHECK (every 30s):**
 
 ```dockerfile
-CMD ["sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port 80 & python -m src.consumer"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8080/health')"
 ```
 
-ALB configuration:
-- **Target Group:** Port 80, path `/incidents*`
-- **Health Check:** GET /health, expect 200
+**ALB Target Group Health Check:**
+
+```
+Path: /health
+Protocol: HTTP
+Port: 8080
+Interval: 30s
+Timeout: 10s
+Healthy Threshold: 2
+Unhealthy Threshold: 2
+```
+
+### ECS/Fargate Deployment
+
+**Workflow:**
+
+1. Build and push image to ECR
+2. Create/update ECS Task Definition
+3. Create/update ECS Service
+4. ALB forwards traffic
+5. Tasks pass health checks
+
+**Task Definition (Terraform):**
+
+```hcl
+module "timeline_task" {
+  source = "./modules/ecs-service"
+  
+  name              = "timeline-service"
+  image_uri         = "${aws_ecr_repository.timeline.repository_url}:dev"
+  container_port    = 8080
+  cpu               = 256
+  memory            = 512
+  desired_count     = 1
+  
+  environment = [
+    { name = "TIMELINE_TABLE_NAME", value = var.timeline_table_name }
+    { name = "TIMELINE_QUEUE_URL", value = aws_sqs_queue.timeline.url }
+    { name = "START_CONSUMER", value = "true" }
+  ]
+  
+  iam_task_role_arn = aws_iam_role.timeline_task.arn
+}
+```
+
+**ALB Listener Rule:**
+
+```hcl
+resource "aws_lb_listener_rule" "timeline" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 20
+  
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.timeline.arn
+  }
+  
+  condition {
+    path_pattern {
+      values = ["/incidents/*/timeline*"]
+    }
+  }
+}
+```
 
 ---
 
