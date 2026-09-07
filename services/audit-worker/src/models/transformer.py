@@ -52,11 +52,11 @@ class AuditTransformer:
         """Extract details from IncidentCreated event."""
         data = event.data
         return {
-            "incident_id": data.get("incident_id"),
-            "title": data.get("title"),
-            "description": data.get("description"),
-            "severity": data.get("severity"),
-            "status": data.get("status"),
+            "incident_id": getattr(data, "incident_id", None),
+            "title": getattr(data, "title", None),
+            "description": getattr(data, "description", None),
+            "severity": getattr(data, "severity", None),
+            "status": getattr(data, "status", None),
             "event_type": event.event_type,
         }
 
@@ -65,9 +65,9 @@ class AuditTransformer:
         """Extract details from IncidentStatusChanged event."""
         data = event.data
         return {
-            "incident_id": data.get("incident_id"),
-            "previous_status": data.get("previous_status"),
-            "new_status": data.get("new_status"),
+            "incident_id": getattr(data, "incident_id", None),
+            "previous_status": getattr(data, "previous_status", None),
+            "new_status": getattr(data, "new_status", None),
             "event_type": event.event_type,
         }
 
@@ -76,9 +76,9 @@ class AuditTransformer:
         """Extract details from IncidentSeverityChanged event."""
         data = event.data
         return {
-            "incident_id": data.get("incident_id"),
-            "previous_severity": data.get("previous_severity"),
-            "new_severity": data.get("new_severity"),
+            "incident_id": getattr(data, "incident_id", None),
+            "previous_severity": getattr(data, "previous_severity", None),
+            "new_severity": getattr(data, "new_severity", None),
             "event_type": event.event_type,
         }
 
@@ -87,8 +87,8 @@ class AuditTransformer:
         """Extract details from IncidentResolved event."""
         data = event.data
         return {
-            "incident_id": data.get("incident_id"),
-            "resolution_summary": data.get("resolution_summary"),
+            "incident_id": getattr(data, "incident_id", None),
+            "resolution_summary": getattr(data, "resolution_summary", None),
             "event_type": event.event_type,
         }
 
@@ -122,7 +122,7 @@ class AuditTransformer:
         Returns:
             Entity ID or None
         """
-        return event.data.get("incident_id")
+        return getattr(event.data, "incident_id", None)
 
     @staticmethod
     def get_human_readable_description(event: BaseEvent) -> str:
@@ -140,22 +140,22 @@ class AuditTransformer:
         data = event.data
 
         if event_type == EVENT_TYPE_INCIDENT_CREATED:
-            severity = data.get("severity", "UNKNOWN")
-            status = data.get("status", "UNKNOWN")
+            severity = getattr(data, "severity", "UNKNOWN")
+            status = getattr(data, "status", "UNKNOWN")
             return f"Incident created by {actor_name} with severity {severity} and status {status}"
 
         elif event_type == EVENT_TYPE_INCIDENT_STATUS_CHANGED:
-            prev = data.get("previous_status", "UNKNOWN")
-            new = data.get("new_status", "UNKNOWN")
+            prev = getattr(data, "previous_status", "UNKNOWN")
+            new = getattr(data, "new_status", "UNKNOWN")
             return f"Incident status changed by {actor_name} from {prev} to {new}"
 
         elif event_type == EVENT_TYPE_INCIDENT_SEVERITY_CHANGED:
-            prev = data.get("previous_severity", "UNKNOWN")
-            new = data.get("new_severity", "UNKNOWN")
+            prev = getattr(data, "previous_severity", "UNKNOWN")
+            new = getattr(data, "new_severity", "UNKNOWN")
             return f"Incident severity changed by {actor_name} from {prev} to {new}"
 
         elif event_type == EVENT_TYPE_INCIDENT_RESOLVED:
-            summary = data.get("resolution_summary", "")
+            summary = getattr(data, "resolution_summary", "")
             if summary:
                 return f"Incident resolved by {actor_name}: {summary}"
             else:
