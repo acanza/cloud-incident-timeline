@@ -20,8 +20,8 @@ class AuditRepository:
     
     Handles all interactions with the audit table.
     DynamoDB schema:
-    - PK: resource_id (incident_id)
-    - SK: created_at#audit_id (allows chronological ordering)
+    - PK: entity_id (incident_id)
+    - SK: created_at (allows chronological ordering)
     """
 
     def __init__(self):
@@ -51,7 +51,7 @@ class AuditRepository:
                 logger,
                 "INFO",
                 "Audit record created successfully",
-                resource_id=record.resource_id,
+                entity_id=record.entity_id,
                 audit_id=record.audit_id,
                 source_event_id=record.source_event_id,
                 action=record.action,
@@ -66,7 +66,7 @@ class AuditRepository:
                 logger,
                 "ERROR",
                 error_msg,
-                resource_id=record.resource_id,
+                entity_id=record.entity_id,
                 error=str(e),
             )
             raise DynamoDBError(
@@ -74,14 +74,14 @@ class AuditRepository:
                 resource=self.table_name,
             )
 
-    def get_records_by_resource(self, resource_id: str) -> List[AuditRecord]:
+    def get_records_by_entity(self, entity_id: str) -> List[AuditRecord]:
         """
-        Retrieve all audit records for a specific resource.
+        Retrieve all audit records for a specific entity.
         
         Results are sorted by created_at (ascending) due to sort key structure.
 
         Args:
-            resource_id: Resource ID (e.g., incident_id)
+            entity_id: Entity ID (e.g., incident_id)
 
         Returns:
             List of AuditRecord instances, sorted chronologically
@@ -91,7 +91,7 @@ class AuditRepository:
         """
         try:
             response = self.table.query(
-                KeyConditionExpression=Key("resource_id").eq(resource_id)
+                KeyConditionExpression=Key("entity_id").eq(entity_id)
             )
 
             records = []
@@ -103,7 +103,7 @@ class AuditRepository:
                 logger,
                 "INFO",
                 f"Retrieved {len(records)} audit records",
-                resource_id=resource_id,
+                entity_id=entity_id,
             )
 
             return records
@@ -114,7 +114,7 @@ class AuditRepository:
                 logger,
                 "ERROR",
                 error_msg,
-                resource_id=resource_id,
+                entity_id=entity_id,
                 error=str(e),
             )
             raise DynamoDBError(
@@ -123,7 +123,7 @@ class AuditRepository:
             )
 
     def record_exists_by_source_event(
-        self, resource_id: str, source_event_id: str
+        self, entity_id: str, source_event_id: str
     ) -> bool:
         """
         Check if an audit record already exists for a given source event.
@@ -131,7 +131,7 @@ class AuditRepository:
         Used for idempotency: prevent duplicate records from same event.
 
         Args:
-            resource_id: Resource ID (e.g., incident_id)
+            entity_id: Entity ID (e.g., incident_id)
             source_event_id: Source event ID
 
         Returns:
@@ -142,7 +142,7 @@ class AuditRepository:
         """
         try:
             response = self.table.query(
-                KeyConditionExpression=Key("resource_id").eq(resource_id),
+                KeyConditionExpression=Key("entity_id").eq(entity_id),
                 FilterExpression=Attr("source_event_id").eq(source_event_id),
                 ProjectionExpression="audit_id",
                 Limit=1,
@@ -155,7 +155,7 @@ class AuditRepository:
                     logger,
                     "INFO",
                     "Audit record already exists for source event (idempotent)",
-                    resource_id=resource_id,
+                    entity_id=entity_id,
                     source_event_id=source_event_id,
                 )
             else:
@@ -163,7 +163,7 @@ class AuditRepository:
                     logger,
                     "DEBUG",
                     "No existing audit record found for source event",
-                    resource_id=resource_id,
+                    entity_id=entity_id,
                     source_event_id=source_event_id,
                 )
 
@@ -175,7 +175,7 @@ class AuditRepository:
                 logger,
                 "ERROR",
                 error_msg,
-                resource_id=resource_id,
+                entity_id=entity_id,
                 source_event_id=source_event_id,
                 error=str(e),
             )
@@ -184,12 +184,12 @@ class AuditRepository:
                 resource=self.table_name,
             )
 
-    def get_record_count(self, resource_id: str) -> int:
+    def get_record_count(self, entity_id: str) -> int:
         """
-        Get the count of audit records for a resource.
+        Get count of audit records for an entity.
 
         Args:
-            resource_id: Resource ID (e.g., incident_id)
+            entity_id: Entity ID (e.g., incident_id)
 
         Returns:
             Number of audit records
@@ -199,7 +199,7 @@ class AuditRepository:
         """
         try:
             response = self.table.query(
-                KeyConditionExpression=Key("resource_id").eq(resource_id),
+                KeyConditionExpression=Key("entity_id").eq(entity_id),
                 Select="COUNT",
             )
 
@@ -208,8 +208,8 @@ class AuditRepository:
             log_with_context(
                 logger,
                 "DEBUG",
-                f"Audit record count for resource: {count}",
-                resource_id=resource_id,
+                f"Audit record count for entity: {count}",
+                entity_id=entity_id,
             )
 
             return count

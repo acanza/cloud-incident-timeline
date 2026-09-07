@@ -112,15 +112,15 @@ class AuditTransformer:
         return action_map.get(event_type, "UNKNOWN")
 
     @staticmethod
-    def get_resource_id_from_event(event: BaseEvent) -> Optional[str]:
+    def get_entity_id_from_event(event: BaseEvent) -> Optional[str]:
         """
-        Extract resource ID (incident_id) from event data.
+        Extract entity ID (incident_id) from event data.
 
         Args:
             event: Domain event
 
         Returns:
-            Resource ID or None
+            Entity ID or None
         """
         return event.data.get("incident_id")
 

@@ -96,7 +96,7 @@ class MessageHandler:
                     "Event processed successfully, creating audit record",
                     message_id=message_id,
                     audit_id=audit_record.audit_id,
-                    resource_id=audit_record.resource_id,
+                    entity_id=audit_record.entity_id,
                     event_id=event.get("event_id"),
                     action=audit_record.action,
                 )

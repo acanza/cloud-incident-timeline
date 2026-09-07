@@ -48,7 +48,7 @@ EVENT_ENVELOPE_VERSION = "1.0"
 
 # DynamoDB attributes
 ATTR_AUDIT_ID = "audit_id"
-ATTR_RESOURCE_ID = "resource_id"
+ATTR_ENTITY_ID = "entity_id"
 ATTR_RESOURCE_TYPE = "resource_type"
 ATTR_CREATED_AT = "created_at"
 ATTR_SOURCE_EVENT_ID = "source_event_id"

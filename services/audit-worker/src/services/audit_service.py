@@ -93,13 +93,13 @@ class AuditService:
                 event_id=event.event_id,
             )
 
-            # Step 4: Extract resource_id and source_event_id
-            resource_id = AuditTransformer.get_resource_id_from_event(event)
+            # Step 4: Extract entity_id and source_event_id
+            entity_id = AuditTransformer.get_entity_id_from_event(event)
             source_event_id = event.event_id
 
-            if not resource_id:
+            if not entity_id:
                 raise ValidationError(
-                    "Could not extract resource_id (incident_id) from event",
+                    "Could not extract entity_id (incident_id) from event",
                     details={
                         "event_type": event_type,
                         "event_id": event.event_id,
@@ -109,20 +109,20 @@ class AuditService:
             log_with_context(
                 logger,
                 "DEBUG",
-                "Extracted resource_id and source_event_id",
-                resource_id=resource_id,
+                "Extracted entity_id and source_event_id",
+                entity_id=entity_id,
                 source_event_id=source_event_id,
             )
 
             # Step 5: Check idempotency (prevent duplicates)
             if self.repository.record_exists_by_source_event(
-                resource_id, source_event_id
+                entity_id, source_event_id
             ):
                 log_with_context(
                     logger,
                     "INFO",
                     "Audit record already exists (idempotent duplicate)",
-                    resource_id=resource_id,
+                    entity_id=entity_id,
                     source_event_id=source_event_id,
                 )
                 return None  # Return None, not error (idempotent is OK)
@@ -135,13 +135,13 @@ class AuditService:
                 logger,
                 "DEBUG",
                 "Event transformed to audit details",
-                resource_id=resource_id,
+                entity_id=entity_id,
                 action=audit_action,
             )
 
             # Step 7: Create AuditRecord
             audit_record = AuditRecord.create(
-                resource_id=resource_id,
+                entity_id=entity_id,
                 source_event_id=source_event_id,
                 event_type=event_type,
                 action=audit_action,
@@ -157,11 +157,11 @@ class AuditService:
                 "DEBUG",
                 "AuditRecord created",
                 audit_id=audit_record.audit_id,
-                resource_id=resource_id,
+                entity_id=entity_id,
             )
 
             # Step 8: Validate record
-            AuditRecordValidator.validate_resource_id(audit_record.resource_id)
+            AuditRecordValidator.validate_resource_id(audit_record.entity_id)
             AuditRecordValidator.validate_action(audit_record.action)
             AuditRecordValidator.validate_source_event_id(
                 audit_record.source_event_id
@@ -182,7 +182,7 @@ class AuditService:
                 "INFO",
                 "Audit record processed and persisted successfully",
                 audit_id=audit_record.audit_id,
-                resource_id=resource_id,
+                entity_id=entity_id,
                 event_id=event.event_id,
             )
 
@@ -207,32 +207,32 @@ class AuditService:
                 event_type=event_data.get("event_type"),
             )
 
-    def get_audit_trail(self, resource_id: str) -> List[AuditRecord]:
+    def get_audit_trail(self, entity_id: str) -> List[AuditRecord]:
         """
-        Retrieve the complete audit trail for a resource.
+        Retrieve the complete audit trail for an entity.
 
         Args:
-            resource_id: Resource ID (e.g., incident_id)
+            entity_id: Entity ID (e.g., incident_id)
 
         Returns:
             List of AuditRecord instances, sorted chronologically
 
         Raises:
-            ValidationError: If resource_id is invalid
+            ValidationError: If entity_id is invalid
             EventProcessingError: If retrieval fails
         """
         try:
             # Validate input
-            AuditRecordValidator.validate_resource_id(resource_id)
+            AuditRecordValidator.validate_resource_id(entity_id)
 
             # Query repository
-            records = self.repository.get_records_by_resource(resource_id)
+            records = self.repository.get_records_by_entity(entity_id)
 
             log_with_context(
                 logger,
                 "INFO",
                 f"Retrieved audit trail with {len(records)} entries",
-                resource_id=resource_id,
+                entity_id=entity_id,
             )
 
             return records
@@ -250,32 +250,32 @@ class AuditService:
             )
             raise EventProcessingError(error_msg)
 
-    def get_audit_record_count(self, resource_id: str) -> int:
+    def get_audit_record_count(self, entity_id: str) -> int:
         """
-        Get the count of audit records for a resource.
+        Get total audit records for an entity.
 
         Args:
-            resource_id: Resource ID (e.g., incident_id)
+            entity_id: Entity ID (e.g., incident_id)
 
         Returns:
-            Number of audit records
+            Count of records
 
         Raises:
-            ValidationError: If resource_id is invalid
+            ValidationError: If entity_id is invalid
             EventProcessingError: If count fails
         """
         try:
             # Validate input
-            AuditRecordValidator.validate_resource_id(resource_id)
+            AuditRecordValidator.validate_resource_id(entity_id)
 
             # Query repository
-            count = self.repository.get_record_count(resource_id)
+            count = self.repository.get_record_count(entity_id)
 
             log_with_context(
                 logger,
                 "DEBUG",
                 f"Audit record count retrieved",
-                resource_id=resource_id,
+                entity_id=entity_id,
                 count=count,
             )
 
@@ -289,7 +289,7 @@ class AuditService:
                 logger,
                 "ERROR",
                 error_msg,
-                resource_id=resource_id,
+                entity_id=entity_id,
                 error=str(e),
             )
             raise EventProcessingError(error_msg)

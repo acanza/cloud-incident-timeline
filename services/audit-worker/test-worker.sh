@@ -20,9 +20,9 @@ NC='\033[0m' # No Color
 # Configuration
 SERVICE_NAME="audit-worker"
 LOG_LEVEL="${LOG_LEVEL:-DEBUG}"
-AUDIT_TABLE_NAME="${AUDIT_TABLE_NAME:-cloud-incident-timeline-dev-audit-table}"
-AUDIT_QUEUE_URL="${AUDIT_QUEUE_URL:-https://sqs.us-east-1.amazonaws.com/123456789012/cloud-incident-timeline-dev-audit-queue}"
-AWS_REGION="${AWS_REGION:-us-east-1}"
+AUDIT_TABLE_NAME="${AUDIT_TABLE_NAME:-cloud-incident-timeline-dev-audit-logs}"
+AUDIT_QUEUE_URL="${AUDIT_QUEUE_URL:-https://sqs.eu-west-3.amazonaws.com/123456789012/cloud-incident-timeline-dev-audit-queue}"
+AWS_REGION="${AWS_REGION:-eu-west-3}"
 
 # Test data
 INCIDENT_ID_1="inc-test-001"
@@ -155,7 +155,7 @@ sleep 3
 echo "Querying DynamoDB for audit record..."
 AUDIT_RECORDS=$(aws dynamodb query \
     --table-name "$AUDIT_TABLE_NAME" \
-    --key-condition-expression "resource_id = :rid" \
+    --key-condition-expression "entity_id = :rid" \
     --expression-attribute-values "{\":rid\":{\"S\":\"$INCIDENT_ID_1\"}}" \
     --region "$AWS_REGION" 2>/dev/null || echo '{"Count": 0}')
 
@@ -221,7 +221,7 @@ sleep 3
 echo "Querying DynamoDB for updated record count..."
 AUDIT_RECORDS=$(aws dynamodb query \
     --table-name "$AUDIT_TABLE_NAME" \
-    --key-condition-expression "resource_id = :rid" \
+    --key-condition-expression "entity_id = :rid" \
     --expression-attribute-values "{\":rid\":{\"S\":\"$INCIDENT_ID_1\"}}" \
     --region "$AWS_REGION" 2>/dev/null || echo '{"Count": 0}')
 
@@ -259,7 +259,7 @@ sleep 3
 echo "Querying DynamoDB to verify record count unchanged..."
 AUDIT_RECORDS=$(aws dynamodb query \
     --table-name "$AUDIT_TABLE_NAME" \
-    --key-condition-expression "resource_id = :rid" \
+    --key-condition-expression "entity_id = :rid" \
     --expression-attribute-values "{\":rid\":{\"S\":\"$INCIDENT_ID_1\"}}" \
     --region "$AWS_REGION" 2>/dev/null || echo '{"Count": 0}')
 
@@ -372,7 +372,7 @@ test_header "Test 7: Verify Complete Audit Trail"
 echo "Querying DynamoDB for complete audit trail of $INCIDENT_ID_1..."
 AUDIT_RECORDS=$(aws dynamodb query \
     --table-name "$AUDIT_TABLE_NAME" \
-    --key-condition-expression "resource_id = :rid" \
+    --key-condition-expression "entity_id = :rid" \
     --expression-attribute-values "{\":rid\":{\"S\":\"$INCIDENT_ID_1\"}}" \
     --region "$AWS_REGION" 2>/dev/null || echo '{"Count": 0, "Items": []}')
 
@@ -438,7 +438,7 @@ sleep 3
 echo "Querying DynamoDB for second incident audit records..."
 AUDIT_RECORDS_2=$(aws dynamodb query \
     --table-name "$AUDIT_TABLE_NAME" \
-    --key-condition-expression "resource_id = :rid" \
+    --key-condition-expression "entity_id = :rid" \
     --expression-attribute-values "{\":rid\":{\"S\":\"$INCIDENT_ID_2\"}}" \
     --region "$AWS_REGION" 2>/dev/null || echo '{"Count": 0}')
 

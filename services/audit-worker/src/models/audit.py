@@ -15,7 +15,7 @@ class AuditRecord(BaseModel):
     """
 
     audit_id: str = Field(..., description="Unique audit record ID")
-    resource_id: str = Field(..., description="ID of the audited resource (e.g., incident_id)")
+    entity_id: str = Field(..., description="ID of the audited entity (e.g., incident_id)")
     resource_type: str = Field("incident", description="Type of resource")
     created_at: str = Field(..., description="ISO 8601 timestamp when audit was created")
     source_event_id: str = Field(..., description="Source event ID for idempotency")
@@ -37,7 +37,7 @@ class AuditRecord(BaseModel):
         """
         item = {
             "audit_id": self.audit_id,
-            "resource_id": self.resource_id,
+            "entity_id": self.entity_id,
             "resource_type": self.resource_type,
             "created_at": self.created_at,
             "source_event_id": self.source_event_id,
@@ -70,7 +70,7 @@ class AuditRecord(BaseModel):
         """
         return cls(
             audit_id=item.get("audit_id", ""),
-            resource_id=item.get("resource_id", ""),
+            entity_id=item.get("entity_id", ""),
             resource_type=item.get("resource_type", "incident"),
             created_at=item.get("created_at", ""),
             source_event_id=item.get("source_event_id", ""),
@@ -85,7 +85,7 @@ class AuditRecord(BaseModel):
     @classmethod
     def create(
         cls,
-        resource_id: str,
+        entity_id: str,
         source_event_id: str,
         event_type: str,
         action: str,
@@ -99,7 +99,7 @@ class AuditRecord(BaseModel):
         Factory method to create a new AuditRecord.
 
         Args:
-            resource_id: ID of the audited resource
+            entity_id: ID of the audited entity
             source_event_id: Source event ID for idempotency
             event_type: Type of event
             action: Action performed
@@ -114,7 +114,7 @@ class AuditRecord(BaseModel):
         """
         return cls(
             audit_id=generate_audit_id(),
-            resource_id=resource_id,
+            entity_id=entity_id,
             resource_type=resource_type,
             created_at=get_current_timestamp(),
             source_event_id=source_event_id,
