@@ -21,8 +21,17 @@ NC='\033[0m' # No Color
 SERVICE_NAME="audit-worker"
 LOG_LEVEL="${LOG_LEVEL:-DEBUG}"
 AUDIT_TABLE_NAME="${AUDIT_TABLE_NAME:-cloud-incident-timeline-dev-audit-logs}"
-AUDIT_QUEUE_URL="${AUDIT_QUEUE_URL:-https://sqs.eu-west-3.amazonaws.com/123456789012/cloud-incident-timeline-dev-audit-queue}"
 AWS_REGION="${AWS_REGION:-eu-west-3}"
+
+# Get AWS Account ID dynamically
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text --profile dev 2>/dev/null)
+if [ -z "$ACCOUNT_ID" ]; then
+    echo -e "${RED}❌ Error: Could not retrieve AWS Account ID. Check AWS credentials and --profile dev${NC}"
+    exit 1
+fi
+
+# SQS Queue URL (can be overridden via environment variable)
+AUDIT_QUEUE_URL="${AUDIT_QUEUE_URL:-https://sqs.${AWS_REGION}.amazonaws.com/${ACCOUNT_ID}/cloud-incident-timeline-dev-audit-queue}"
 
 # Test data
 INCIDENT_ID_1="inc-test-001"

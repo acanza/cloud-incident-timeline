@@ -5,6 +5,7 @@ Handles individual message processing, error handling, and message lifecycle.
 
 import json
 from typing import Optional, Dict, Any
+from pydantic import ValidationError
 from src.logger import setup_logger, log_with_context
 from src.config import Config
 from src.context import app_context
@@ -126,6 +127,18 @@ class MessageHandler:
                 details=str(e.details),
             )
             return False
+
+        except ValidationError as e:
+            # Malformed event structure (Pydantic validation failed)
+            # Delete message because it won't improve on retry
+            log_with_context(
+                logger,
+                "WARNING",
+                f"Event validation failed (malformed structure): {str(e)}",
+                message_id=message_id,
+            )
+            self._delete_message(message_id, receipt_handle)
+            return True
 
         except json.JSONDecodeError as e:
             log_with_context(
