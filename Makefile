@@ -1,4 +1,4 @@
-.PHONY: help init fmt validate plan apply destroy clean refresh state-list state-show tf-version
+.PHONY: help init fmt validate plan apply destroy clean refresh state-list state-show tf-version show output console graph print-env
 
 # Colors for output
 BLUE := \033[0;34m

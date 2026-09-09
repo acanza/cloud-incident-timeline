@@ -74,8 +74,9 @@ module "iam" {
   audit_logs_table_arn = module.dynamodb.audit_logs_table_arn
 
   # EventBridge + SQS (Phase 4, updated after modules created)
-  event_bus_arn   = module.eventbridge.event_bus_arn
-  audit_queue_arn = module.sqs.audit_queue_arn
+  event_bus_arn      = module.eventbridge.event_bus_arn
+  timeline_queue_arn = module.sqs.timeline_queue_arn
+  audit_queue_arn    = module.sqs.audit_queue_arn
 }
 
 # ============================================================================
@@ -134,6 +135,8 @@ module "timeline_service" {
   environment_variables = {
     AWS_REGION          = var.aws_region
     TIMELINE_TABLE_NAME = "cloud-incident-timeline-${var.environment}-incident_timeline"
+    TIMELINE_QUEUE_URL  = module.sqs.timeline_queue_url
+    EVENT_BUS_NAME      = "cloud-incident-timeline-${var.environment}-event-bus"
   }
 
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
@@ -168,13 +171,14 @@ module "sqs" {
   max_receive_count = 3
 }
 
-# EventBridge custom event bus and routing rule
+# EventBridge custom event bus and routing rules
 module "eventbridge" {
   source = "../../modules/eventbridge"
 
-  project_name    = var.project_name
-  environment     = var.environment
-  audit_queue_arn = module.sqs.audit_queue_arn
+  project_name       = var.project_name
+  environment        = var.environment
+  timeline_queue_arn = module.sqs.timeline_queue_arn
+  audit_queue_arn    = module.sqs.audit_queue_arn
 }
 
 # audit-worker ECS service

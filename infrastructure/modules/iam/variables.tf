@@ -51,6 +51,12 @@ variable "audit_queue_arn" {
   default     = ""
 }
 
+variable "timeline_queue_arn" {
+  description = "ARN of the timeline SQS queue"
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   description = "Common tags for all resources"
   type        = map(string)

@@ -1,0 +1,74 @@
+services:
+  timeline-service:
+    image: timeline-service:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: timeline-service-dev
+    ports:
+      - "8002:8080"  # Map host port 8002 to container port 8080
+    environment:
+      # AWS Configuration
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      
+      # DynamoDB
+      TIMELINE_TABLE_NAME: ${TIMELINE_TABLE_NAME:-cloud-incident-timeline-dev-incident-timeline}
+      
+      # SQS Queue URLs
+      TIMELINE_QUEUE_URL: ${TIMELINE_QUEUE_URL:-https://sqs.us-east-1.amazonaws.com/123456789012/cloud-incident-timeline-dev-timeline-queue}
+      
+      # EventBridge (optional)
+      EVENT_BUS_NAME: ${EVENT_BUS_NAME:-cloud-incident-timeline-dev-event-bus}
+      
+      # Service Configuration
+      SERVICE_NAME: timeline-service
+      LOG_LEVEL: DEBUG
+      PORT: 8080
+      
+      # SQS Consumer (set to "true" to enable, requires AWS credentials)
+      START_CONSUMER: "false"
+    
+    # Use host networking to access local AWS services/mocks
+    # network_mode: host
+    
+    # For development: mount source code for live reload
+    # volumes:
+    #   - .:/app
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    
+    # AWS credentials (if needed for local AWS services)
+    # env_file:
+    #   - .env
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Network (optional)
+networks:
+  default:
+    name: timeline-network
+    driver: bridge
