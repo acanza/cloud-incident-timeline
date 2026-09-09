@@ -9,24 +9,24 @@ services:
     container_name: audit-worker-dev
     environment:
       # AWS Configuration
-      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_REGION: ${AWS_REGION:-eu-west-3}
       
       # DynamoDB
-      AUDIT_TABLE_NAME: ${AUDIT_TABLE_NAME:-cloud-incident-timeline-dev-audit-table}
+      AUDIT_TABLE_NAME: ${AUDIT_TABLE_NAME:-cloud-incident-timeline-dev-audit-logs}
       
-      # SQS Queue URL
-      AUDIT_QUEUE_URL: ${AUDIT_QUEUE_URL:-https://sqs.us-east-1.amazonaws.com/123456789012/cloud-incident-timeline-dev-audit-queue}
+      # SQS Queue URL (will be auto-populated if AUDIT_QUEUE_URL not set)
+      AUDIT_QUEUE_URL: ${AUDIT_QUEUE_URL}
       
       # Service Configuration
       SERVICE_NAME: audit-worker
-      LOG_LEVEL: DEBUG
+      LOG_LEVEL: ${LOG_LEVEL:-DEBUG}
     
     # Use host networking to access local AWS services/mocks
     # network_mode: host
     
-    # For development: mount source code for live reload
-    # volumes:
-    #   - .:/app
+    # Mount AWS credentials for container to access AWS services
+    volumes:
+      - ~/.aws:/root/.aws:ro
     
     # No health check for background worker (no HTTP endpoints)
     
@@ -40,9 +40,9 @@ services:
           cpus: "0.25"
           memory: 256M
     
-    # AWS credentials (if needed for local AWS services)
-    # env_file:
-    #   - .env
+    # Load environment variables from .env file
+    env_file:
+      - .env
     
     # Restart policy
     restart: unless-stopped
