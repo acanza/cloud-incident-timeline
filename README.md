@@ -1,6 +1,6 @@
 # Cloud Incident Timeline
 
-**Learning Project** — Microservices + Event-Driven Architecture on AWS
+A hands-on learning project that builds a real-world incident management system using **decoupled microservices** that communicate asynchronously through **event-driven architecture**. Learn how to design scalable, resilient systems on AWS using **Terraform for Infrastructure as Code**, modern messaging patterns with EventBridge and SQS, and containerized services with ECS Fargate.
 
 ## About
 
