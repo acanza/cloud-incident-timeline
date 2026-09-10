@@ -2,12 +2,18 @@
 
 A hands-on learning project that builds a real-world incident management system using **decoupled microservices** that communicate asynchronously through **event-driven architecture**. Learn how to design scalable, resilient systems on AWS using **Terraform for Infrastructure as Code**, modern messaging patterns with EventBridge and SQS, and containerized services with ECS Fargate.
 
-## About
+## Quick Start
 
-A hands-on project to learn:
-- **Microservices architecture** — Multiple independent services communicating via APIs
-- **Event-driven patterns** — Async communication using EventBridge and SQS
-- **Infrastructure as Code** — Terraform on AWS (ECS, DynamoDB, ALB)
+```bash
+# 1. Set up infrastructure
+cd infrastructure/environments/dev
+terraform init
+terraform plan
+terraform apply
+
+# 2. Deploy services (see deployment guide)
+# 3. Test endpoints (see service README files)
+```
 
 ## Tech Stack
 
@@ -55,19 +61,6 @@ This project is designed for **minimal cost** using AWS Free Tier services. Esti
 - ✅ No autoscaling (predictable, fixed cost)
 - ✅ Public subnets only (minimal data transfer)
 - ✅ Destroy after testing (pay only during active use)
-
-## Quick Start
-
-```bash
-# 1. Set up infrastructure
-cd infrastructure/environments/dev
-terraform init
-terraform plan
-terraform apply
-
-# 2. Deploy services (see deployment guide)
-# 3. Test endpoints (see service README files)
-```
 
 ## Documentation
 
