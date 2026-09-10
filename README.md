@@ -18,6 +18,10 @@ A hands-on project to learn:
 - **API Gateway**: Application Load Balancer (ALB)
 - **Infrastructure**: Terraform
 
+## Architecture Diagram
+
+![Cloud Incident Timeline Architecture](./docs/cloud-incident-timeline-diagram.png)
+
 ## Project Structure
 
 ```
