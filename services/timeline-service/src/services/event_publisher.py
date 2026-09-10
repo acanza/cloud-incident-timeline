@@ -1,4 +1,4 @@
-"""Event publishing service."""
+"""Event publishing service for timeline-service."""
 
 import json
 import os
@@ -8,19 +8,19 @@ from typing import Any, Dict, Optional
 import boto3
 from botocore.exceptions import ClientError
 
-from ..constants import (
-    EVENT_SCHEMA_VERSION,
-    SERVICE_NAME
-)
+from ..constants import SERVICE_NAME
 from ..context import get_correlation_id
 from ..logger import get_structured_logger
 
 
 logger = get_structured_logger(__name__, service_name=SERVICE_NAME)
 
+# Event schema version
+EVENT_SCHEMA_VERSION = "1.0"
+
 
 class EventPublisher:
-    """Service for publishing domain events to EventBridge."""
+    """Service for publishing domain events from timeline-service to EventBridge."""
     
     def __init__(self):
         """Initialize EventPublisher with boto3 client and configuration."""
@@ -39,7 +39,7 @@ class EventPublisher:
         """Publish an event to EventBridge.
         
         Args:
-            event_type: Type of event (e.g., 'IncidentCreated')
+            event_type: Type of event (e.g., 'TimelineCommentAdded')
             event_data: Event payload data
             actor_user_id: User ID of the actor
             actor_email: Email of the actor (optional)
@@ -77,7 +77,7 @@ class EventPublisher:
                 Entries=[
                     {
                         'Source': self.event_source,
-                        'DetailType': event_type,  # e.g., "IncidentCreated", "IncidentStatusChanged"
+                        'DetailType': event_type,  # e.g., "TimelineCommentAdded"
                         'Detail': json.dumps(event_envelope),
                         'EventBusName': self.event_bus_name
                     }

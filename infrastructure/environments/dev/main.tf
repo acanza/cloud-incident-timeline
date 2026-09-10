@@ -137,6 +137,7 @@ module "timeline_service" {
     TIMELINE_TABLE_NAME = "cloud-incident-timeline-${var.environment}-incident_timeline"
     TIMELINE_QUEUE_URL  = module.sqs.timeline_queue_url
     EVENT_BUS_NAME      = "cloud-incident-timeline-${var.environment}-event-bus"
+    START_CONSUMER      = "true"
   }
 
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
