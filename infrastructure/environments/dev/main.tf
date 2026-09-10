@@ -90,7 +90,7 @@ module "incident_service" {
 
   service_name    = "incident-service"
   cluster_name    = module.ecs_cluster.cluster_name
-  container_image = "${module.ecr.repository_urls["incident-service"]}:dev"
+  container_image = "${module.ecr.repository_urls["incident-service"]}:latest"
   container_port  = var.container_port
   cpu             = var.service_cpu["incident-service"]
   memory          = var.service_memory["incident-service"]
@@ -126,7 +126,7 @@ module "timeline_service" {
 
   service_name    = "timeline-service"
   cluster_name    = module.ecs_cluster.cluster_name
-  container_image = "${module.ecr.repository_urls["timeline-service"]}:dev"
+  container_image = "${module.ecr.repository_urls["timeline-service"]}:latest"
   container_port  = var.container_port
   cpu             = var.service_cpu["timeline-service"]
   memory          = var.service_memory["timeline-service"]
@@ -188,7 +188,7 @@ module "audit_worker" {
 
   service_name    = "audit-worker"
   cluster_name    = module.ecs_cluster.cluster_name
-  container_image = "${module.ecr.repository_urls["audit-worker"]}:dev"
+  container_image = "${module.ecr.repository_urls["audit-worker"]}:latest"
   container_port  = var.container_port
   cpu             = var.service_cpu["audit-worker"]
   memory          = var.service_memory["audit-worker"]
