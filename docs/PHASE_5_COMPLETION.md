@@ -33,10 +33,11 @@
 - **Validation:** Comment length (max 1000 chars), incident_id format
 
 #### Audit Worker
-- **Location:** [services/audit-worker/](../services/audit-worker/)
+- **Location:** [services/audit-worker/README.md](../services/audit-worker/README.md)
 - **Type:** Background worker (no HTTP endpoints)
-- **Process:** Consumes SQS, writes to DynamoDB
-- **Documentation:** Service README (Phase 1-4 implementation complete)
+- **Process:** Consumes SQS events, writes to DynamoDB audit_logs
+- **Supported events:** IncidentCreated, IncidentStatusChanged, IncidentSeverityChanged, IncidentResolved
+- **Documentation:** Complete with event processing flow, idempotency, deployment
 
 ### ✅ Event Contracts
 
