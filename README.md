@@ -36,6 +36,26 @@ A hands-on project to learn:
 └── .github/specs/          # Architecture & implementation specs
 ```
 
+## Cost Estimation
+
+This project is designed for **minimal cost** using AWS Free Tier services. Estimated daily cost with light testing:
+
+| Service | Configuration | Daily Cost |
+|---------|---------------|-----------|
+| **ECS Fargate** | 3 tasks × 256 CPU (0.5 GB) | ~$1-2 |
+| **DynamoDB** | On-demand pricing, 3 tables | ~$0-1 |
+| **Application Load Balancer** | Fixed hourly charge | ~$0.50 |
+| **CloudWatch Logs** | 3-day retention, minimal volume | ~$0.10 |
+| **Data Transfer** | Internal AWS communication | ~$0 |
+| **EventBridge + SQS** | Minimal volume, within free tier | ~$0 |
+| | **Total Estimated Daily Cost** | **~$2-5** |
+
+**Cost-Control Strategies:**
+- ✅ No NAT Gateway (saves ~$32/month)
+- ✅ No autoscaling (predictable, fixed cost)
+- ✅ Public subnets only (minimal data transfer)
+- ✅ Destroy after testing (pay only during active use)
+
 ## Quick Start
 
 ```bash
