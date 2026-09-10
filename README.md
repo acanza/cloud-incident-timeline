@@ -47,7 +47,21 @@ terraform apply
 
 ## Documentation
 
-- [**Deployment Guide**](./docs/DEPLOYMENT.md) — Step-by-step deployment
-- [**Destroy Guide**](./docs/DESTROY.md) — Cleanup procedures
-- [**Architecture**](./docs/ARCHITECTURE.md) — System design & flows
-- [Service READMEs](./services/) — API contracts & testing
+### Getting Started
+- [**Architecture**](./docs/ARCHITECTURE.md) — Complete system design with diagrams
+- [**Deployment Guide**](./docs/DEPLOYMENT.md) — Prerequisites, setup, validation
+- [**Destroy Guide**](./docs/DESTROY.md) — Safe cleanup, backup strategy
+
+### Service Documentation
+- [incident-service](./services/incident-service/README.md) — REST API for incident CRUD
+- [timeline-service](./services/timeline-service/README.md) — Timeline queries & comments
+- [audit-worker](./services/audit-worker/README.md) — Event processing & audit logs
+
+### Comprehensive Checklist
+- [**Phase 5: Documentation Completion**](./docs/PHASE_5_COMPLETION.md) — All documentation verified & complete
+
+### Specifications (Deep Dive)
+- [Project Context](./github/specs/00-project-context.md)
+- [Architecture Spec](./github/specs/01-architecture.md)
+- [Data & Events](./github/specs/06-data-and-events.md)
+- [Cost Control](./github/specs/07-cost-control.md)
