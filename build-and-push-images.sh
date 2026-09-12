@@ -6,11 +6,6 @@
 
 set -e
 
-# Configuration
-AWS_REGION="eu-west-3"
-ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-SERVICES=("incident-service" "timeline-service" "audit-worker")
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -23,6 +18,11 @@ if [ -z "$AWS_ACCOUNT_ID" ]; then
     echo -e "${RED}❌ Error: Could not retrieve AWS Account ID. Check AWS credentials and --profile dev${NC}"
     exit 1
 fi
+
+# Configuration
+AWS_REGION="eu-west-3"
+ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+SERVICES=("incident-service" "timeline-service" "audit-worker")
 
 echo -e "${YELLOW}================================${NC}"
 echo -e "${YELLOW}Building & Pushing Docker Images${NC}"
