@@ -13,9 +13,9 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Get AWS Account ID dynamically
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text --profile dev 2>/dev/null)
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text 2>/dev/null)
 if [ -z "$AWS_ACCOUNT_ID" ]; then
-    echo -e "${RED}❌ Error: Could not retrieve AWS Account ID. Check AWS credentials and --profile dev${NC}"
+    echo -e "${RED}❌ Error: Could not retrieve AWS Account ID. Check AWS credentials.${NC}"
     exit 1
 fi
 
@@ -81,6 +81,3 @@ done
 
 echo ""
 echo -e "${GREEN}✓ All images built and pushed successfully!${NC}"
-echo -e "${YELLOW}Next steps:${NC}"
-echo "  1. Force ECS to redeploy: aws ecs update-service --cluster cloud-incident-timeline-dev-cluster --service <service-name> --force-new-deployment --region eu-west-3"
-echo "  2. Or run: make plan && make apply"
