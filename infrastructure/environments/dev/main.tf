@@ -137,7 +137,7 @@ module "timeline_service" {
 
   environment_variables = {
     AWS_REGION          = var.aws_region
-    TIMELINE_TABLE_NAME = "cloud-incident-timeline-${var.environment}-incident_timeline"
+    TIMELINE_TABLE_NAME = "cloud-incident-timeline-${var.environment}-incident-timeline"
     TIMELINE_QUEUE_URL  = module.sqs.timeline_queue_url
     EVENT_BUS_NAME      = "cloud-incident-timeline-${var.environment}-event-bus"
     START_CONSUMER      = "true"
