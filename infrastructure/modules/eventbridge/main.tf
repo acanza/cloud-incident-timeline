@@ -42,7 +42,9 @@ resource "aws_cloudwatch_event_target" "timeline_queue" {
     input_paths = {
       detail = "$.detail"
     }
-    input_template = jsonencode(<detail>)
+    input_template = jsonencode({
+      detail = "<detail>"
+    })
   }
 }
 
@@ -88,7 +90,9 @@ resource "aws_cloudwatch_event_target" "audit_queue" {
     input_paths = {
       detail = "$.detail"
     }
-    input_template = jsonencode(<detail>)
+    input_template = jsonencode({
+      detail = "<detail>"
+    })
   }
 }
 
