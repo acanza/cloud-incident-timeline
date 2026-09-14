@@ -37,15 +37,8 @@ resource "aws_cloudwatch_event_target" "timeline_queue" {
   # Allow EventBridge to send messages to the SQS queue
   role_arn = aws_iam_role.eventbridge_sqs_role.arn
 
-  # Transform the event to extract only the detail field for SQS
-  input_transformer {
-    input_paths = {
-      detail = "$.detail"
-    }
-    input_template = jsonencode({
-      detail = "<detail>"
-    })
-  }
+  # Send only the event detail (our event envelope) to SQS
+  input_path = "$.detail"
 }
 
 # ============================================================================
@@ -85,15 +78,8 @@ resource "aws_cloudwatch_event_target" "audit_queue" {
   # Allow EventBridge to send messages to the SQS queue
   role_arn = aws_iam_role.eventbridge_sqs_role.arn
 
-  # Transform the event to extract only the detail field for SQS
-  input_transformer {
-    input_paths = {
-      detail = "$.detail"
-    }
-    input_template = jsonencode({
-      detail = "<detail>"
-    })
-  }
+  # Send only the event detail (our event envelope) to SQS
+  input_path = "$.detail"
 }
 
 # ============================================================================
