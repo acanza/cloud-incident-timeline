@@ -46,7 +46,7 @@ module "alb" {
 
   # Health check paths per service
   incident_service_health_check_path = "/incidents/health"
-  timeline_service_health_check_path = "/incidents/timeline/health"
+  timeline_service_health_check_path = "/incidents/health/timeline/health"
 }
 
 # ============================================================================
