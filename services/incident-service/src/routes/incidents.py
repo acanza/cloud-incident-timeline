@@ -36,6 +36,18 @@ router = APIRouter(
 )
 
 
+@router.get(
+    "/health",
+    summary="Health check for incident-service"
+)
+async def health_check():
+    """
+    Health check endpoint for ALB and ECS.
+    Used by load balancer to verify service is running.
+    """
+    return {"status": "ok", "service": SERVICE_NAME}
+
+
 @router.post(
     "",
     status_code=status.HTTP_201_CREATED,

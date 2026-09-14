@@ -43,7 +43,10 @@ module "alb" {
 
   enable_http2               = true
   enable_deletion_protection = false
-  health_check_path          = "/health"
+
+  # Health check paths per service
+  incident_service_health_check_path = "/incidents/health"
+  timeline_service_health_check_path = "/incidents/timeline/health"
 }
 
 # ============================================================================
@@ -91,7 +94,7 @@ module "incident_service" {
   service_name    = "incident-service"
   cluster_name    = module.ecs_cluster.cluster_name
   container_image = "${module.ecr.repository_urls["incident-service"]}:latest"
-  container_port  = 8001  # incident-service listens on port 8001
+  container_port  = 8001 # incident-service listens on port 8001
   cpu             = var.service_cpu["incident-service"]
   memory          = var.service_memory["incident-service"]
   desired_count   = var.service_desired_count["incident-service"]
@@ -127,7 +130,7 @@ module "timeline_service" {
   service_name    = "timeline-service"
   cluster_name    = module.ecs_cluster.cluster_name
   container_image = "${module.ecr.repository_urls["timeline-service"]}:latest"
-  container_port  = 8080  # timeline-service listens on port 8080 (configurable via PORT env var)
+  container_port  = 8080 # timeline-service listens on port 8080 (configurable via PORT env var)
   cpu             = var.service_cpu["timeline-service"]
   memory          = var.service_memory["timeline-service"]
   desired_count   = var.service_desired_count["timeline-service"]
@@ -138,7 +141,7 @@ module "timeline_service" {
     TIMELINE_QUEUE_URL  = module.sqs.timeline_queue_url
     EVENT_BUS_NAME      = "cloud-incident-timeline-${var.environment}-event-bus"
     START_CONSUMER      = "true"
-    PORT                = "8080"  # Explicit port configuration for uvicorn
+    PORT                = "8080" # Explicit port configuration for uvicorn
   }
 
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
@@ -190,7 +193,7 @@ module "audit_worker" {
   service_name    = "audit-worker"
   cluster_name    = module.ecs_cluster.cluster_name
   container_image = "${module.ecr.repository_urls["audit-worker"]}:latest"
-  container_port  = 8001  # Not exposed externally (background worker)
+  container_port  = 8001 # Not exposed externally (background worker)
   cpu             = var.service_cpu["audit-worker"]
   memory          = var.service_memory["audit-worker"]
   desired_count   = var.service_desired_count["audit-worker"]

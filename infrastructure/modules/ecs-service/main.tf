@@ -74,7 +74,7 @@ resource "aws_ecs_task_definition" "service" {
         timeout     = 5
         retries     = 3
         startPeriod = 10
-      } : {
+        } : {
         command     = ["CMD-SHELL", "exit 0"]
         interval    = 30
         timeout     = 5

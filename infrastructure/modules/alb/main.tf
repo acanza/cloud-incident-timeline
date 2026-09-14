@@ -57,7 +57,7 @@ resource "aws_lb_listener" "http" {
 # Target Group for incident-service
 resource "aws_lb_target_group" "incident_service" {
   name_prefix = "inc-"
-  port        = 3000
+  port        = 8001
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "ip"
@@ -67,7 +67,7 @@ resource "aws_lb_target_group" "incident_service" {
     unhealthy_threshold = var.health_check_unhealthy_threshold
     timeout             = var.health_check_timeout
     interval            = var.health_check_interval
-    path                = var.health_check_path
+    path                = var.incident_service_health_check_path != null ? var.incident_service_health_check_path : var.health_check_path
     matcher             = var.health_check_matcher
   }
 
@@ -85,7 +85,7 @@ resource "aws_lb_target_group" "incident_service" {
 # Target Group for timeline-service
 resource "aws_lb_target_group" "timeline_service" {
   name_prefix = "tl-"
-  port        = 3000
+  port        = 8080
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "ip"
@@ -95,7 +95,7 @@ resource "aws_lb_target_group" "timeline_service" {
     unhealthy_threshold = var.health_check_unhealthy_threshold
     timeout             = var.health_check_timeout
     interval            = var.health_check_interval
-    path                = var.health_check_path
+    path                = var.timeline_service_health_check_path != null ? var.timeline_service_health_check_path : var.health_check_path
     matcher             = var.health_check_matcher
   }
 
