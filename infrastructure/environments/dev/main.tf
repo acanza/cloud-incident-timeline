@@ -43,7 +43,10 @@ module "alb" {
 
   enable_http2               = true
   enable_deletion_protection = false
-  health_check_path          = "/health"
+
+  # Health check paths per service
+  incident_service_health_check_path = "/incidents/health"
+  timeline_service_health_check_path = "/incidents/health/timeline/health"
 }
 
 # ============================================================================
@@ -90,8 +93,8 @@ module "incident_service" {
 
   service_name    = "incident-service"
   cluster_name    = module.ecs_cluster.cluster_name
-  container_image = "${module.ecr.repository_urls["incident-service"]}:dev"
-  container_port  = var.container_port
+  container_image = "${module.ecr.repository_urls["incident-service"]}:latest"
+  container_port  = 8001 # incident-service listens on port 8001
   cpu             = var.service_cpu["incident-service"]
   memory          = var.service_memory["incident-service"]
   desired_count   = var.service_desired_count["incident-service"]
@@ -126,18 +129,19 @@ module "timeline_service" {
 
   service_name    = "timeline-service"
   cluster_name    = module.ecs_cluster.cluster_name
-  container_image = "${module.ecr.repository_urls["timeline-service"]}:dev"
-  container_port  = var.container_port
+  container_image = "${module.ecr.repository_urls["timeline-service"]}:latest"
+  container_port  = 8080 # timeline-service listens on port 8080 (configurable via PORT env var)
   cpu             = var.service_cpu["timeline-service"]
   memory          = var.service_memory["timeline-service"]
   desired_count   = var.service_desired_count["timeline-service"]
 
   environment_variables = {
     AWS_REGION          = var.aws_region
-    TIMELINE_TABLE_NAME = "cloud-incident-timeline-${var.environment}-incident_timeline"
+    TIMELINE_TABLE_NAME = "cloud-incident-timeline-${var.environment}-incident-timeline"
     TIMELINE_QUEUE_URL  = module.sqs.timeline_queue_url
     EVENT_BUS_NAME      = "cloud-incident-timeline-${var.environment}-event-bus"
     START_CONSUMER      = "true"
+    PORT                = "8080" # Explicit port configuration for uvicorn
   }
 
   task_execution_role_arn = module.iam.ecs_task_execution_role_arn
@@ -188,8 +192,8 @@ module "audit_worker" {
 
   service_name    = "audit-worker"
   cluster_name    = module.ecs_cluster.cluster_name
-  container_image = "${module.ecr.repository_urls["audit-worker"]}:dev"
-  container_port  = var.container_port
+  container_image = "${module.ecr.repository_urls["audit-worker"]}:latest"
+  container_port  = 8001 # Not exposed externally (background worker)
   cpu             = var.service_cpu["audit-worker"]
   memory          = var.service_memory["audit-worker"]
   desired_count   = var.service_desired_count["audit-worker"]
@@ -211,8 +215,10 @@ module "audit_worker" {
   subnet_ids         = module.networking.public_subnet_ids
 
   # audit-worker does NOT attach to ALB (target_group_arn uses default null)
-  assign_public_ip = true
-  aws_region       = var.aws_region
+  # Disable HTTP health checks since this is a background worker
+  enable_container_health_check = false
+  assign_public_ip              = true
+  aws_region                    = var.aws_region
 
   project_name = var.project_name
   environment  = var.environment

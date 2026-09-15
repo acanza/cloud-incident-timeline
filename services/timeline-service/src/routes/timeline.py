@@ -28,6 +28,20 @@ timeline_service = TimelineService()
 
 
 @router.get(
+    "/health/timeline/health",
+    summary="Health Check for Timeline Service",
+    description="Health check endpoint for ALB and ECS"
+)
+async def timeline_health_check():
+    """
+    Health check endpoint for ALB and ECS.
+    Accessible at /incidents/health/timeline/health
+    (matches ALB rule /incidents/*/timeline*)
+    """
+    return {"status": "ok", "service": "timeline-service"}
+
+
+@router.get(
     "/{incident_id}/timeline",
     response_model=TimelineResponseModel,
     status_code=status.HTTP_200_OK,

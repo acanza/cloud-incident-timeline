@@ -155,3 +155,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "enable_container_health_check" {
+  description = "Enable HTTP-based container health check for services with ALB (set to false for background workers)"
+  type        = bool
+  default     = true
+}

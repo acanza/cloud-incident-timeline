@@ -65,10 +65,17 @@ resource "aws_ecs_task_definition" "service" {
         }
       }
 
-      # Health check for the container (optional, can be used by services)
-      # This is in addition to ALB health checks for HTTP services
-      healthCheck = {
-        command     = ["CMD-SHELL", "test -f /tmp/healthy || exit 1"]
+      # Container health check
+      # For HTTP services: uses /health endpoint with curl
+      # For background workers: uses a dummy command (always succeeds)
+      healthCheck = var.enable_container_health_check ? {
+        command     = ["CMD-SHELL", "curl -f http://localhost:${var.container_port}/health || exit 1"]
+        interval    = 30
+        timeout     = 5
+        retries     = 3
+        startPeriod = 10
+        } : {
+        command     = ["CMD-SHELL", "exit 0"]
         interval    = 30
         timeout     = 5
         retries     = 3

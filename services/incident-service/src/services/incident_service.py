@@ -5,6 +5,8 @@ from datetime import datetime
 from typing import List, Optional, Tuple
 
 from ..models.incident import Incident
+from ..logger import get_structured_logger
+from .incident_repository import IncidentRepository
 from ..constants import (
     IncidentStatus, IncidentSeverity,
     EVENT_TYPE_INCIDENT_CREATED,
@@ -13,16 +15,23 @@ from ..constants import (
     EVENT_TYPE_INCIDENT_RESOLVED
 )
 
+logger = get_structured_logger(__name__, service_name="incident-service")
+
 
 class IncidentService:
     """Service for managing incidents."""
     
     def __init__(self):
-        """Initialize incident service with in-memory storage.
-        
-        NOTE: This is temporary. Will be replaced with DynamoDB integration in Phase 3.
-        """
-        self.incidents: dict[str, Incident] = {}
+        """Initialize incident service with DynamoDB storage."""
+        try:
+            self.repository = IncidentRepository()
+            logger.info("Incident service initialized with DynamoDB repository")
+        except Exception as e:
+            logger.error(
+                f"Failed to initialize incident service: {str(e)}",
+                extra={'exception_type': type(e).__name__}
+            )
+            raise
     
     def create_incident(
         self,
@@ -42,6 +51,7 @@ class IncidentService:
         """
         incident_id = f"inc-{uuid.uuid4().hex[:12]}"
         now = datetime.utcnow().isoformat() + 'Z'
+        event_id = f"evt-{uuid.uuid4().hex[:12]}"
         
         incident = Incident(
             incident_id=incident_id,
@@ -53,8 +63,35 @@ class IncidentService:
             updated_at=now
         )
         
-        # Store in memory (will be DynamoDB in Phase 3)
-        self.incidents[incident_id] = incident
+        # Persist to DynamoDB
+        if not self.repository.create_incident(incident):
+            logger.error(
+                "Failed to create incident in repository",
+                extra={'incident_id': incident_id}
+            )
+            raise Exception(f"Failed to persist incident {incident_id}")
+        
+        # Create timeline event
+        if not self.repository.create_timeline_event(
+            incident_id=incident_id,
+            event_id=event_id,
+            event_type=EVENT_TYPE_INCIDENT_CREATED,
+            event_data={
+                "incident_id": incident_id,
+                "title": title,
+                "description": description,
+                "severity": severity,
+                "status": IncidentStatus.OPEN.value
+            },
+            created_at=now
+        ):
+            logger.warning(
+                "Failed to create timeline event",
+                extra={
+                    'incident_id': incident_id,
+                    'event_type': EVENT_TYPE_INCIDENT_CREATED
+                }
+            )
         
         return incident, EVENT_TYPE_INCIDENT_CREATED
     
@@ -67,7 +104,7 @@ class IncidentService:
         Returns:
             Incident or None if not found
         """
-        return self.incidents.get(incident_id)
+        return self.repository.get_incident(incident_id)
     
     def list_incidents(self) -> List[Incident]:
         """List all incidents.
@@ -75,7 +112,7 @@ class IncidentService:
         Returns:
             List of incidents
         """
-        return list(self.incidents.values())
+        return self.repository.list_incidents()
     
     def update_incident_status(
         self,
@@ -99,15 +136,39 @@ class IncidentService:
         if incident.status == new_status:
             return incident, None
         
-        # Update status
+        # Update in DynamoDB
+        if not self.repository.update_incident_status(incident_id, new_status):
+            logger.error(
+                "Failed to update incident status",
+                extra={
+                    'incident_id': incident_id,
+                    'new_status': new_status
+                }
+            )
+            return None, None
+        
+        # Update local object
         now = datetime.utcnow().isoformat() + 'Z'
         incident.update_status(new_status, now)
         
-        # Determine event type
+        # Create timeline event
+        event_id = f"evt-{uuid.uuid4().hex[:12]}"
         if new_status == IncidentStatus.RESOLVED.value:
             event_type = EVENT_TYPE_INCIDENT_RESOLVED
         else:
             event_type = EVENT_TYPE_INCIDENT_STATUS_CHANGED
+        
+        self.repository.create_timeline_event(
+            incident_id=incident_id,
+            event_id=event_id,
+            event_type=event_type,
+            event_data={
+                "incident_id": incident_id,
+                "old_status": incident.status,
+                "new_status": new_status
+            },
+            created_at=now
+        )
         
         return incident, event_type
     
@@ -133,9 +194,34 @@ class IncidentService:
         if incident.severity == new_severity:
             return incident, None
         
-        # Update severity
+        # Update in DynamoDB
+        if not self.repository.update_incident_severity(incident_id, new_severity):
+            logger.error(
+                "Failed to update incident severity",
+                extra={
+                    'incident_id': incident_id,
+                    'new_severity': new_severity
+                }
+            )
+            return None, None
+        
+        # Update local object
         now = datetime.utcnow().isoformat() + 'Z'
         incident.update_severity(new_severity, now)
+        
+        # Create timeline event
+        event_id = f"evt-{uuid.uuid4().hex[:12]}"
+        self.repository.create_timeline_event(
+            incident_id=incident_id,
+            event_id=event_id,
+            event_type=EVENT_TYPE_INCIDENT_SEVERITY_CHANGED,
+            event_data={
+                "incident_id": incident_id,
+                "old_severity": incident.severity,
+                "new_severity": new_severity
+            },
+            created_at=now
+        )
         
         return incident, EVENT_TYPE_INCIDENT_SEVERITY_CHANGED
 

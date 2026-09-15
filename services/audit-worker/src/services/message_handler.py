@@ -165,16 +165,44 @@ class MessageHandler:
     def _parse_message_body(self, body: str) -> Optional[Dict[str, Any]]:
         """
         Parse message body as JSON event.
+        
+        Handles two formats:
+        1. Direct event envelope (from input transformation):
+           {"event_id": "...", "event_type": "...", "source": "...", ...}
+        2. Full EventBridge event (from SQS receive):
+           {"version": "0", "id": "...", "detail-type": "...", "detail": {...}}
 
         Args:
             body: Message body string
 
         Returns:
-            Parsed event dictionary or None if parsing fails
+            Parsed event dictionary (detail) or None if parsing fails
         """
         try:
-            event = json.loads(body)
-            return event
+            parsed = json.loads(body)
+            
+            # If it's a full EventBridge event, extract the detail
+            if isinstance(parsed, dict) and "detail" in parsed and "version" in parsed:
+                log_with_context(
+                    logger,
+                    "DEBUG",
+                    "Detected full EventBridge event, extracting detail",
+                    event_id=parsed.get("id"),
+                )
+                detail = parsed.get("detail")
+                if isinstance(detail, dict):
+                    return detail
+                elif isinstance(detail, str):
+                    # If detail is a string, parse it as JSON
+                    try:
+                        return json.loads(detail)
+                    except json.JSONDecodeError:
+                        logger.error(f"Failed to parse detail as JSON: {detail[:100]}")
+                        return None
+            
+            # Otherwise, assume it's already the event envelope
+            return parsed
+            
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON: {str(e)}")
             return None

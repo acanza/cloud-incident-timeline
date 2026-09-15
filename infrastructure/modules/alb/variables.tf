@@ -48,9 +48,21 @@ variable "enable_deletion_protection" {
 }
 
 variable "health_check_path" {
-  description = "Health check path for target groups"
+  description = "Health check path for target groups (default, can be overridden per service)"
   type        = string
   default     = "/health"
+}
+
+variable "incident_service_health_check_path" {
+  description = "Health check path for incident-service target group"
+  type        = string
+  default     = null
+}
+
+variable "timeline_service_health_check_path" {
+  description = "Health check path for timeline-service target group"
+  type        = string
+  default     = null
 }
 
 variable "health_check_matcher" {
