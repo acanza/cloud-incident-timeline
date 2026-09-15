@@ -15,6 +15,115 @@ terraform apply
 # 3. Test endpoints (see service README files)
 ```
 
+## End-to-End Test
+
+After deploying all services, validate that the complete system works correctly with the automated end-to-end test.
+
+### Prerequisites
+
+```bash
+# Ensure you have AWS credentials configured
+aws sts get-caller-identity
+
+# Install Python dependencies
+pip install requests boto3
+```
+
+### Running the Test
+
+```bash
+# From the project root directory
+python3 test-e2e-flow.py
+```
+
+### Test Execution Flow
+
+The test validates the complete incident lifecycle across all services:
+
+1. **Health Checks** ✓
+   - Verifies incident-service responds at `GET /incidents/health`
+   - Verifies timeline-service responds at `GET /incidents/health/timeline/health`
+
+2. **Incident Creation** ✓
+   - Creates a new incident via `POST /incidents` 
+   - Validates HTTP 201 response with incident_id
+   - Publishes `IncidentCreated` event to EventBridge
+
+3. **DynamoDB Incidents Table** ✓
+   - Queries the incidents table by incident_id
+   - Validates incident persists with correct fields:
+     - `title`, `description`, `severity`, `status`
+     - `created_at` timestamp
+   - Confirms data is immediately available (DynamoDB eventual consistency)
+
+4. **DynamoDB Timeline Table** ✓
+   - Queries incident-timeline table for the created incident
+   - Validates `IncidentCreated` event is recorded with:
+     - `incident_id` (hash key)
+     - `created_at` (sort key)
+     - Event metadata and data payload
+
+5. **DynamoDB Audit-Logs Table** ✓
+   - Queries audit-logs table by entity_id
+   - Confirms audit-worker consumed SQS message successfully
+   - Validates audit record contains:
+     - `audit_id`, `entity_id`, `event_type`
+     - `correlation_id` linking to incident
+     - `created_at` timestamp
+
+### Expected Output
+
+Successful test execution will display:
+
+```
+================================================================================
+TEST SUMMARY
+================================================================================
+Incidents Table:   ✓ PASS
+Timeline Table:    ✓ PASS
+Audit Logs Table:  ✓ PASS
+
+Test Incident ID: inc-xxxxxxxxxxxxxxx
+✓✓✓ END-TO-END TEST PASSED ✓✓✓
+All critical components working correctly!
+```
+
+### What Gets Validated
+
+| Component | Validation | Expected Result |
+|-----------|-----------|-----------------|
+| Health Checks | Both services respond 200 OK | ✅ Healthy |
+| Incident API | Create incident, get 201 response | ✅ Created |
+| EventBridge | Event published successfully | ✅ Published |
+| SQS Queue | Messages routed from EventBridge | ✅ Routed |
+| Audit-Worker | SQS messages consumed from audit queue | ✅ Consumed |
+| Incidents Table | Incident persisted immediately | ✅ Persisted |
+| Timeline Table | Event record created for incident | ✅ Recorded |
+| Audit-Logs Table | Audit record created from event | ✅ Logged |
+
+### Troubleshooting
+
+If tests fail:
+
+```bash
+# Check service health directly
+curl http://ALB_URL/incidents/health
+curl http://ALB_URL/incidents/health/timeline/health
+
+# View service logs (replace with your ALB URL and service name)
+aws logs tail /ecs/incident-service --follow --region eu-west-3
+aws logs tail /ecs/audit-worker --follow --region eu-west-3
+
+# Inspect DynamoDB tables
+aws dynamodb scan --table-name cloud-incident-timeline-dev-incidents --region eu-west-3
+
+# Check SQS queue status
+aws sqs get-queue-attributes \
+  --queue-url https://sqs.eu-west-3.amazonaws.com/YOUR_ACCOUNT_ID/audit-queue \
+  --attribute-names All \
+  --region eu-west-3
+```
+
 ## Tech Stack
 
 - **Services**: Python 3.11, FastAPI
